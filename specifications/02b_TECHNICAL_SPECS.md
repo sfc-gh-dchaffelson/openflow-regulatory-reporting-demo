@@ -1,0 +1,828 @@
+# Technical Specifications Document
+
+## Document Information
+
+**Title:** Technical Model Specifications - Gaming Supervision Data Standard
+
+**Source:** Section 4 - Technical Model (DGOJ)
+
+**Extraction Date:** 2024
+
+**Data Model Version:** 3.x
+
+**Standard Compliance:** European Committee for Standardization supervision
+data standard
+
+---
+
+## Data Model
+
+### General Information
+
+**Version:** 3.x
+
+**Format:** XSD (XML Schema Definition)
+
+**Publication Location:** Electronic headquarters of DGOJ
+
+**Standard Compliance:** European Committee for Standardization supervision
+data standard
+
+---
+
+## Digital Signature
+
+### Standard
+
+**Signature Standard:** XAdES-BES version 1.3.2
+
+### Signature Methods
+
+#### Enveloped Signature
+
+**Type:** Enveloped
+
+**Description:** Signature embedded within XML batch
+
+**Filename:** enveloped.xml
+
+#### Enveloping Manifest Signature
+
+**Type:** Enveloping Manifest
+
+**Description:** Manifest signature optimized for signing process
+
+**Files:** lote.xml, enveloping.xml
+
+**Hash Algorithm:** SHA-256
+
+**References:**
+- http://www.w3.org/TR/xmldsig-core/#sec-o-Manifest
+- http://www.w3.org/TR/xmldsig-core/#defSignatureEnveloping
+
+---
+
+## File Compression and Encryption
+
+### Compression
+
+**Algorithm:** Deflate
+
+**Format:** ZIP
+
+**Compatibility:** WinZip extensions over PKWare specification
+
+### Encryption
+
+**Algorithm:** AES-256
+
+**Password Requirements:**
+
+- **Length:** 50 characters
+- **Mandatory Character Types:** digits, letters, special characters
+- **Special Characters Examples:** #, $, &, !
+
+---
+
+## Batch Structure
+
+### Definition
+
+XML element defined in XSD with header information
+
+### Periodic Information
+
+**Types:** RU, CJ, OP, JUA, CEV
+
+**Frequency:** Daily, Monthly
+
+**Fragmentation Rule:** New batch required after 10 subrecords
+
+**Constraint:** Only last batch can contain fewer than 10 subrecords
+
+### Real-Time Information
+
+**Types:** JUC
+
+**Generation Triggers:**
+
+1. **Condition:** 15 minutes elapsed since previous batch (Priority: 1)
+2. **Condition:** 500 subrecords reached (Priority: 1)
+
+**Rule:** Whichever condition occurs first
+
+---
+
+## Batch Header
+
+**Type:** LoteCabecera
+
+**Fields:**
+
+- **OperatorId:** Operator code
+- **AlmacenId:** Storage code
+- **LoteId:** Unique within storage and operator
+- **Version:** Data model version indicator
+
+**Optional Element:**
+
+- **Namespace:** http://www.w3.org/2000/09/xmldsig#
+- **Purpose:** XSD validation after enveloped signature
+
+---
+
+## Directory Structure
+
+### Level 1
+
+**Directory:** CNJ
+
+### Level 2
+
+**Directory:** <OperatorId>
+
+### Levels 3-6
+
+#### RU - User Registry
+
+**Description:** User Registry
+
+**Subdirectories:**
+
+- **Diario:** RUD
+- **Mensual:** RUT, RUR, RUG
+
+#### CJ - Game Account
+
+**Description:** Game Account
+
+**Subdirectories:**
+
+- **Diario:** CJD
+- **Mensual:** CJT, CJD
+
+#### OP - Operator
+
+**Description:** Operator
+
+**Subdirectories by Game Type:** OPT, ORT, BOT
+
+#### JU - Game
+
+**Description:** Game
+
+**Subdirectories:**
+
+- **AAAAMMDD:** SES, POT, RAC, RAM, COC, LOT, LOP
+- **Anteriores:** Previous days
+- **Mensual:** JUA
+- **Diario:** CEV
+
+#### CEV - Event Catalog
+
+**Description:** Event Catalog
+
+**Frequencies:** Daily, Monthly
+
+---
+
+## File Naming Conventions
+
+### RU - User Registry
+
+**Pattern:**
+<OperatorId>_<StorageId>_<Type>_<Subtype>_<Periodicity>_<Date>_<BatchId>.zip
+
+**Type:** RU
+
+**Subtypes:** RUT, RUD, RUR, RUG
+
+**Periodicity:** D (Daily), M (Monthly)
+
+**Date Format:**
+- **Daily:** AAAAMMDD
+- **Monthly:** AAAAMM
+
+### CJ - Game Account
+
+**Pattern:**
+<OperatorId>_<StorageId>_<Type>_<Subtype>_<Periodicity>_<Date>_<BatchId>.zip
+
+**Type:** CJ
+
+**Subtypes:** CJT, CJD
+
+**Periodicity:** D (Daily), M (Monthly)
+
+**Date Format:**
+- **Daily:** AAAAMMDD
+- **Monthly:** AAAAMM
+
+### OP - Operator
+
+**Pattern:**
+<OperatorId>_<StorageId>_<Type>_<Subtype>_<GameType>_<Periodicity>_<Date>_<B
+atchId>.zip
+
+**Type:** OP
+
+**Subtypes:** OPT, ORT, BOT
+
+**Periodicity:** M (Monthly)
+
+**Date Format:** AAAAMM
+
+### JU - Game (Current Day)
+
+**Pattern:**
+<OperatorId>_<StorageId>_<Type>_<Subtype>_<GameType>_<DateTime>_<BatchId>.zi
+p
+
+**Type:** JU
+
+**Subtype:** JUC
+
+**Game Types:** SES, POT, RAC, RAM, COC, LOT, LOP
+
+**DateTime Format:** AAAAMMDDHHMMSS
+
+### JU - Game (Previous Days)
+
+**Pattern:** <OperatorId>_<StorageId>_<Type>_DIARIO_<Date>.<extension>
+
+**Type:** JU
+
+**Date Format:** AAAAMMDD
+
+**Extensions:**
+- **Single File:** .zip
+- **Fragmented:** .zip.00x (where x = 1, 2, 3...)
+
+**Maximum File Size:** 1 GB
+
+### JUA and CEV
+
+**Pattern:**
+<OperatorId>_<StorageId>_<Type>_<Subtype>_<Periodicity>_<Date>_<BatchId>.zip
+
+**Type:** JU
+
+**Subtypes:** JUA, CEV
+
+**Periodicity:** D (Daily), M (Monthly)
+
+**Date Format:**
+- **Daily:** AAAAMMDD
+- **Monthly:** AAAAMM
+
+---
+
+## Record Structure
+
+### Base Record
+
+**Type:** RegistroBase
+
+**Abstract:** True
+
+**Header Fields:**
+
+- **RegistroId:** Unique code generated by operator
+- **SubregistroId_SubregistroTotal:** Format: x/y (e.g., 1/3, 2/3, 3/3)
+- **Fecha:** Date/Time of record generation
+- **Rectificacion:**
+  - **RegistroId:** Referenced record ID for correction
+  - **RegistroFecha:** Date of referenced record
+
+### Periodic Records
+
+**Base Types:** RegistroPeriodicoBase, RegistroMensualBase
+
+**Fields:**
+
+- **Periodicidad:** Diaria, Mensual
+- **Dia_Mes:** AAAAMMDD, AAAAMM
+
+### Subrecord Decomposition
+
+**Trigger:** More than 1000 players
+
+**Maximum Per Subrecord:** 1000
+
+**Applies To:** RUD, RUR, RUG, CJD, JUC, CEV, JUA
+
+**Rule:** Exhaust 1000 items before starting new subrecord
+
+---
+
+## Field Types
+
+### String Fields
+
+- **cadena10:** Maximum length 10 characters
+- **cadena20:** Maximum length 20 characters
+- **cadena50:** Maximum length 50 characters
+- **cadena100:** Maximum length 100 characters
+- **cadena200:** Maximum length 200 characters
+- **cadena1000:** Maximum length 1000 characters
+
+### Numeric Fields
+
+**cantidad:**
+- **Type:** Decimal
+- **Maximum Decimals:** 2
+- **Maximum Total Digits:** 12
+
+**entero3:**
+- **Type:** Integer
+- **Maximum Digits:** 3
+
+**entero6:**
+- **Type:** Integer
+- **Maximum Digits:** 6
+
+**entero8:**
+- **Type:** Integer
+- **Maximum Digits:** 8
+
+### Date Fields
+
+- **date-aaaamm:** Format YYYYMM (Example: 202301)
+- **date-hhmmss:** Format HHMMSS (Example: 081125)
+- **date-ddhhmm:** Format DDHHMM (Example: 270811)
+- **date-aaaammdd:** Format YYYYMMDD (Example: 20230127)
+- **date-aaaammddhhmmss:** Format YYYYMMDDHHMMSS (Example: 20230127081125)
+- **date-aaaammddhhmmssTZ:** Format YYYYMMDDHHMMSS+HHMM (Example:
+20230127081125+0100)
+
+---
+
+## Field Handling Rules
+
+### Mandatory Fields
+
+**Rule:** No mandatory field can be empty
+
+**Error:** Grammar non-compliance
+
+**Zero Value Allowed:** Yes
+
+**Example Correct:** <Depositos><Total>0</Total></Depositos>
+
+**Examples Incorrect:**
+- <Depositos><Total></Total></Depositos>
+- <Depositos><Total/></Depositos>
+- <Depositos></Depositos>
+
+### Optional Fields
+
+**Rule:** Can be undefined or filled with 0
+
+**Applies To:** Fields with 0 occurrences allowed in XSD
+
+---
+
+## Rectification Rules
+
+**Method:** Complete substitution of previous record
+
+**Constraint:** Must be within same storage
+
+**Preservation:** Referenced record must not be physically deleted
+
+**Logical Status:** Referenced record considered logically annulled
+
+**Fields Required:** All fields must have content, not only modifications
+
+---
+
+## Reporting Periodicity
+
+### Real-Time
+
+**Types:** JUC
+
+**Generation Events:**
+
+- **POC, BNG, AZA, RLT, BLJ, PUN, COM, LOP:** Session end
+- **POT:** Tournament end
+- **Apuestas:** Result known
+- **COC:** Contest end
+- **LOT:** Winners determined
+
+### Daily
+
+**Types:** RUD, CJD, CEV
+
+**Deadline:** Before 4 AM next day
+
+### Monthly
+
+**Types:** RUT, RUR, RUG, CJT, OPT, ORT, BOT, JUA, CEV
+
+**Deadline:** Before 23:59 first day of next month
+
+---
+
+## Game Packaging
+
+### Current Day
+
+**Storage:** Individual batches/files
+
+**Location:** AAAAMMDD folder
+
+### Previous Days
+
+**Action:** Package entire day folder at 24:00
+
+**Format:** ZIP without compression or encryption
+
+**Contents:** All day batches (compressed and encrypted individually)
+
+**Maximum Size:** 1 GB per file
+
+**Fragmentation:** Multiple fragments if exceeds 1 GB
+
+**Destination:** Anteriores folder
+
+**Cleanup:** Delete original day folder after packaging
+
+---
+
+## Game Session Requirements
+
+### Applicable Games
+
+POC, BNG, AZA, RLT, BLJ, PUN, COM, Loterías presorteadas
+
+### Configuration Parameters
+
+- **DuracionLimite:** Maximum session time
+- **GastoLimite:** Maximum losses in EUR
+- **PeriodoExclusion:** Exclusion time after session (S/N)
+- **TiempoExclusion:** Exclusion duration (days, hours, minutes)
+
+### Session Tracking
+
+- **SesionId:** Unique identifier per session
+- **FechaInicioSesion:** Session start date/time
+- **FechaFinSesion:** Session end date/time
+- **FechaInicioPrimerJuego:** First game start date/time
+- **FechaFinUltimoJuego:** Last game end date/time
+- **SesionCompleta:** S/N indicator
+- **SesionNueva:** S/N indicator
+- **MotivoFinSesion:** Closure reason (Usuario/Limite/Conexion)
+
+---
+
+## NIF/NIE Format Validation
+
+### NIF
+
+**Digits:** 8
+
+**Format:** 8 digits + 1 control letter
+
+**Padding:** Left-pad with zeros to reach 8 digits
+
+### NIE
+
+**Digits:** 7
+
+**Format:** Letter + 7 digits + 1 control letter
+
+**Padding:** Left-pad with zeros to reach 7 digits
+
+**Exception:** If 10 digits starting with X0, remove first 0 after X
+(result: 9 characters)
+
+**Validation Reference:**
+http://www.ordenacionjuego.es/es/calculo-digito-control
+
+---
+
+## Player State Codes
+
+### EstadoCNJ
+
+- **A:** Active - properly identified and verified
+- **PV:** Pending verification - resident not verified documentally
+- **S:** Suspended - requires MotivoEstado
+- **C:** Cancelled - requires MotivoEstado
+- **CD:** Cancelled by death
+- **PR:** Subjective prohibition - Article 6 Law 13/2011
+- **AE:** Self-excluded
+- **O:** Others
+
+### MotivoEstado Values
+
+- **PeticionJugador:** Cancelled at player request
+- **Inactividad:** Suspended/cancelled due to inactivity
+- **JuegoSeguro:** Safe gaming measures applied
+- **FraudeldPagos:** Fraud indicators (identity, payment methods, etc.)
+- **TyC:** Terms and Conditions violation
+- **Otros:** Other reasons not listed
+
+---
+
+## Special Player Profiles
+
+### Types
+
+- ClientePrivilegiado
+- JugadorIntensivo
+- ParticipanteJoven
+- ComportamientoRiesgo
+- Otros
+
+### Reporting
+
+- **FechaInicio:** Profile start date
+- **FechaFin:** Profile end date (if known)
+- **Requirement:** Mandatory when player is in special profile
+
+---
+
+## Payment Method Types
+
+### Codes
+
+- **1:** Cash (includes Hal Cash, local payments)
+- **2:** Prepaid (Paysafecard, Moneytopay, Neosurf, etc.)
+- **3:** Bank transfer (Wire transfer, Sofort, Interac)
+- **4:** Credit card (includes ApplePay, GarminPay as credit)
+- **5:** Debit card (includes ApplePay, GarminPay as debit)
+- **6:** Electronic wallet (Paypal, Skrill, Neteller, etc.)
+- **7:** Check
+- **8:** Premium SMS
+- **9:** Postal order
+- **10:** Treasury services
+- **11:** Telecom operator payment
+- **12:** Premium calls
+- **13:** Card (generic - use only if debit/credit unknown)
+- **14:** Fixed terminal
+- **15:** Instant payment (Bizum, PIX)
+- **99:** Other (specify)
+
+---
+
+## Game Type Codes
+
+- **ADC:** Sports betting - counterparty
+- **AHC:** Horse racing betting - counterparty
+- **AOC:** Other betting - counterparty
+- **ADM:** Sports betting - mutual
+- **AHM:** Horse racing betting - mutual
+- **ADX:** Sports betting - crossed
+- **AOX:** Other betting - crossed
+- **POC:** Poker cash
+- **POT:** Poker tournament
+- **BNG:** Bingo
+- **BLJ:** Blackjack
+- **AZA:** Slots
+- **RLT:** Roulette
+- **PUN:** Punto y banca
+- **COM:** Complementary games
+- **COC:** Contests
+- **LOT:** Lottery games
+
+---
+
+## Bet Type Codes
+
+- **Simple:** Single event, single market
+- **Multiple:** Single event, multiple markets
+- **Combinada:** Multiple events
+- **Xy:** Xy type
+- **Trixie:** Trixie type
+- **Patent:** Patent type
+- **Yankee:** Yankee type
+- **Lucky15:** Lucky15 type
+- **Lucky31:** Lucky31 type
+- **Lucky63:** Lucky63 type
+- **Heinz:** Heinz type
+- **SuperHeinz:** SuperHeinz type
+- **Goliat:** Goliat type
+- **Otro:** Other type
+
+---
+
+## Device Type Codes
+
+- **MO:** Mobile phone
+- **PC:** Personal computer
+- **TB:** Tablet
+- **TF:** Fixed terminal
+- **OT:** Other
+
+---
+
+## Limit Types and Periods
+
+### Limit Types
+
+- **Deposito:** Deposit limit (mandatory)
+- **Participación:** Participation limit (optional)
+- **Gasto:** Spending limit (optional)
+- **Tiempo:** Time limit (optional)
+
+### Limit Periods
+
+- **Diario:** Daily (00:00 to 23:59:59)
+- **Semanal:** Weekly (Monday to Sunday)
+- **Mensual:** Monthly (1st to last day)
+
+### Limit Units
+
+- **DIA:** Days
+- **SEMANA:** Weeks
+- **MES:** Months
+- **MINUTO:** Minutes
+- **HORA:** Hours
+- **EUR:** Euros
+
+---
+
+## Game Variants
+
+### Poker Variants
+
+- **DR:** Draw
+- **ST:** Stud
+- **OM:** Omaha
+- **TH:** Texas Holdem
+
+### Roulette Variants
+
+- **Americana:** American roulette
+- **Francesa:** French/European roulette
+
+### Blackjack Variants
+
+- **21:** Super21
+- **AM:** American
+- **CL:** Classic
+- **PO:** Pontoon
+- **SU:** Surrender
+
+---
+
+## Bonus Concepts
+
+- **CONCESION:** Bonuses granted
+- **CANCELACION:** Bonuses cancelled
+- **LIBERACION:** Bonuses released (two lines: + bonus, - EUR generated)
+
+---
+
+## Operator Account Adjustments
+
+- **APA:** Participation adjustments
+- **APR:** Prize adjustments
+- **BON:** Bonuses
+- **OVL:** Overlay
+- **ADD:** Added
+- **OTR:** Others
+
+---
+
+## Transaction Result Codes
+
+- **OK:** Correct
+- **CU:** Cancelled by user
+- **CO:** Cancelled by operator
+- **CM:** Cancelled by payment gateway
+- **OT:** Other
+
+---
+
+## Document Verification Types
+
+- **DOC:** Document photo
+- **SLF:** Player photo with document
+- **SLFV:** Verified selfie (with operator-provided code)
+- **DOM:** Domiciled receipt/invoice
+- **VID:** Video with document
+- **VIDV:** Verified video (reading operator text/code)
+- **VIDC:** Video conference
+- **CER:** Electronic certificate/DNI
+- **TLF:** Phone call
+- **OTR:** Other
+
+---
+
+## Session End Reasons
+
+- **Usuario:** Closed voluntarily by user
+- **Limite:** Closed upon reaching configured limit
+- **Conexion:** Closed due to connection loss
+
+---
+
+## Sports Event Codes
+
+**Total Codes:** 84
+
+**Special Codes:**
+
+- **901:** e-Sports (AOC license)
+- **902:** Greyhounds (AOC license)
+- **998:** Other bets (AOC/AOX licenses)
+- **999:** Other (specify)
+
+**Includes:** Athletics, Basketball, Football, Tennis, etc.
+
+---
+
+## Competition Gender Codes
+
+- **M:** Male competition
+- **F:** Female competition
+- **O:** Other (mixed or unknown)
+
+---
+
+## Country Codes
+
+**Standard:** ISO 3166-1 alpha-2
+
+**Special Codes:**
+
+- **00:** Unknown or not in list
+- **ES:** Spain
+
+---
+
+## Data Retention Requirements
+
+### User Documents
+
+**Period:** 4 years from account cancellation
+
+**Includes:** Digital copies of documents provided by participants
+
+### Identity Verification Queries
+
+**Period:** 4 years from user registry cancellation
+
+**Includes:** Date, hour, minute of query
+
+### RGIAJ Queries
+
+**Period:** 4 years from user registry cancellation
+
+**Frequency:** Hourly verification required
+
+### Payment Operations
+
+**Period:** Not specified
+
+**Includes:** Detailed record of each deposit/withdrawal operation
+
+### Source Code
+
+**Period:** 4 years
+
+**Formats:** Source code, binaries, other deployable formats
+
+**Requirement:** All software versions used in technical system
+
+### SCI Storage
+
+**Minimum Period:** 4 years
+
+**Online Access:** 12 months of activity
+
+**Recovery Procedure:** Required for minimum 4 years
+
+### Logs and Records
+
+**Online Access:** 12 months minimum
+
+**Storage Period:** 4 years minimum
+
+**Includes:** Game decisions, user registry, game accounts, payment methods,
+security logs
+
+### Customer Service Communications
+
+**Period:** 2 years
+
+**Includes:** All participant communications through different channels
+
+---
+
+## Storage Location Requirements
+
+**Requirement:** European Union
+
+**Applies To:** SCI storage, backup copies, secondary replica sites
+
+**Notification:** Location and modifications must be communicated to DGOJ
+
+---
+
+**End of Document**
++------------------------------------------------------------------------------+
+

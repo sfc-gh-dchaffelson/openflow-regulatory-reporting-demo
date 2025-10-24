@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Credentials and Security - NEVER commit these
+credentials/*.pem
+credentials/*.key
+credentials/sftp_key*
+credentials/passwords.txt
+credentials/*.pub
+*DEMO_CREDENTIALS.txt
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+dist/
+build/
+*.nar
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.venv
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+*.cache
+
+# OS generated files
+Thumbs.db
+Desktop.ini

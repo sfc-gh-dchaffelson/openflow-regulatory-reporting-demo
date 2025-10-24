@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling", "hatch-datavolo-nar"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prepare-regulatory-file"
+dynamic = ["version"]
+description = "NiFi Python processor for Spanish DGOJ regulatory compliance - XAdES-BES signing, ZIP compression, AES-256 encryption"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "BoeGamingReport Demo", email = "dan.chaffelson@snowflake.com"},
+]
+keywords = [
+    "nifi",
+    "python",
+    "processor",
+    "dgoj",
+    "spain",
+    "regulatory",
+    "xades",
+    "encryption",
+    "signature",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Documentation = "https://github.com/example/prepare-regulatory-file"
+Source = "https://github.com/example/prepare-regulatory-file"
+
+[tool.hatch.version]
+path = "src/prepare_regulatory_file/__about__.py"
+
+[tool.hatch.build.targets.nar]
+packages = ["src/prepare_regulatory_file"]

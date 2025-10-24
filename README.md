@@ -329,10 +329,12 @@ To make this production-ready:
 
 ---
 
-## License and Usage
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
 This is a demonstration project. Production use requires appropriate DGOJ licensing and certification.
 
 ---
 
-**Last Updated:** October 20, 2025
+**Last Updated:** October 24, 2025

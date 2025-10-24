@@ -254,6 +254,27 @@ If you can connect and see your bucket as the working directory, setup is comple
 | **SFTP Private Key** | `credentials/sftp_key` | `credentials/sftp_key` |
 | **S3 Bucket** | (from Step 2) | `dch-dgoj-demo-sftp` |
 
+### OpenFlow on SPCS: External Access Integration Required
+
+If using OpenFlow on Snowpark Container Services, you must update the External Access Integration created in [01_SNOWFLAKE_SETUP.md](01_SNOWFLAKE_SETUP.md) to include your SFTP hostname:
+
+```sql
+-- Add your SFTP server to the network rule
+CREATE OR REPLACE NETWORK RULE sftp_rule
+  MODE = EGRESS
+  TYPE = HOST_PORT
+  VALUE_LIST = ('<your-sftp-hostname>:22');
+
+-- Update the integration to include SFTP access
+CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION openflow_external_access
+  ALLOWED_NETWORK_RULES = (pypi_rule, sftp_rule)
+  ENABLED = TRUE;
+```
+
+Replace `<your-sftp-hostname>` with your actual SFTP hostname from above (e.g., `s-d5c0fe27772648908.server.transfer.us-west-2.amazonaws.com`).
+
+Without this, the PutSFTP processor will fail to connect with network or timeout errors.
+
 ---
 
 ## Verification Commands

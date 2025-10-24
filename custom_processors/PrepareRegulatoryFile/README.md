@@ -125,7 +125,7 @@ GenerateFlowFile (1-min timer)
 ### Requirements
 
 - Python 3.11 or higher
-- OpenFlow (Apache NiFi 2025.10.14+)
+- OpenFlow (Apache NiFi 2.5.0+)
 
 ### What This Processor Does
 

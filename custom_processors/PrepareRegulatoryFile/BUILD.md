@@ -17,6 +17,12 @@ Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
 
 The NAR contains only the processor code. Dependencies (lxml, signxml, cryptography, pyzipper) are installed by OpenFlow from PyPI when the processor is first loaded.
 
+## OpenFlow on SPCS: External Access Integration Required
+
+If deploying to OpenFlow on Snowpark Container Services (SPCS), you must configure an External Access Integration for PyPI access. Without this, the processor will load onto the canvas but will not show properties, and OpenFlow Runtime logs will show "Failed to download dependencies for Python Processor".
+
+See [01_SNOWFLAKE_SETUP.md](../../setup/01_SNOWFLAKE_SETUP.md) for External Access Integration setup.
+
 ## Upload to OpenFlow
 
 1. Open OpenFlow in web browser

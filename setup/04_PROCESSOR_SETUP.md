@@ -132,20 +132,29 @@ Should show `prepare_regulatory_file/PrepareRegulatoryFile.py` and `META-INF/MAN
 
 If properties or relationships are not visible in the Configure dialog, the processor failed to load properly.
 
-Check for code issues:
-- If you modified `PrepareRegulatoryFile.py`, check for syntax errors
-- Verify the processor class structure matches NiFi Python Processor API requirements
-- Refresh your browser (Ctrl+F5 / Cmd+F5) after making corrections
+**Common Cause - OpenFlow on SPCS:** Missing External Access Integration for PyPI.
+
+**Symptoms:**
+- Processor appears on canvas after upload
+- No properties displayed in Configure dialog
+- OpenFlow Runtime logs show: "Failed to download dependencies for Python Processor"
+
+**Solution:** Configure External Access Integration for PyPI access. See [01_SNOWFLAKE_SETUP.md](01_SNOWFLAKE_SETUP.md) Step 1.
+
+**Other causes:**
+- Syntax errors in `PrepareRegulatoryFile.py` (if modified)
+- Invalid processor class structure
+- Browser cache (try Ctrl+F5 / Cmd+F5)
 
 ### Dependency Installation
 
-When you first add the processor to canvas, OpenFlow installs dependencies from PyPI (lxml, signxml, cryptography, pyzipper). This requires internet connectivity.
+When you first add the processor to canvas, OpenFlow installs dependencies from PyPI (lxml, signxml, cryptography, pyzipper).
 
-If you encounter errors:
-- If running OpenFlow in SPCS (Snowpark Container Services), verify it has an External Access Integration (EAI) configured for PyPI access
-- Verify OpenFlow has internet connectivity to PyPI
-- Ensure no firewall rules block PyPI access
-- You may see temporary errors while dependencies install; wait a few moments
+**Requirements:**
+- **OpenFlow BYOC:** Direct internet connectivity to PyPI (usually available by default)
+- **OpenFlow SPCS:** External Access Integration configured for PyPI (see above)
+
+Dependencies install automatically on first use. Wait a few moments if you see temporary errors during initial processor load
 
 ---
 

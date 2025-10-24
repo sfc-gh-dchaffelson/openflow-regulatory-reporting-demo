@@ -23,10 +23,61 @@ The OpenFlow flow uses parameter references `#{Snowflake Database}` and `#{Snowf
 
 ---
 
-## Step 1: Create OpenFlow Service User
+## Step 1: External Access Integration for OpenFlow on SPCS
+
+If using OpenFlow on Snowpark Container Services (SPCS), create an External Access Integration to allow OpenFlow to access external services.
+
+**Skip this step** if using OpenFlow on BYOC (Bring Your Own Cloud), which has direct internet access.
+
+### Required External Access
+
+OpenFlow needs egress access for:
+1. **PyPI** - Download Python processor dependencies (lxml, signxml, cryptography, pyzipper)
+2. **SFTP Server** - Upload regulatory files via PutSFTP processor
+
+```sql
+USE ROLE ACCOUNTADMIN;
+
+-- Create network rule for PyPI access
+CREATE OR REPLACE NETWORK RULE pypi_rule
+  MODE = EGRESS
+  TYPE = HOST_PORT
+  VALUE_LIST = ('pypi.org:443', 'files.pythonhosted.org:443');
+
+-- Create network rule for SFTP access
+-- Replace with your SFTP hostname and port from 03_SFTP_SETUP.md
+CREATE OR REPLACE NETWORK RULE sftp_rule
+  MODE = EGRESS
+  TYPE = HOST_PORT
+  VALUE_LIST = ('<your-sftp-hostname>:22');
+
+-- Create external access integration with both rules
+CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION openflow_external_access
+  ALLOWED_NETWORK_RULES = (pypi_rule, sftp_rule)
+  ENABLED = TRUE;
+
+-- Grant usage to OpenFlow role (adjust role name as needed)
+GRANT USAGE ON INTEGRATION openflow_external_access TO ROLE <OPENFLOW_ROLE>;
+```
+
+**SFTP Hostname Examples:**
+- AWS Transfer Family: `s-xxxxx.server.transfer.us-west-2.amazonaws.com:22`
+- Azure SFTP: `youraccount.blob.core.windows.net:22`
+- Custom server: `sftp.yourdomain.com:22`
+
+**Note:** Without this integration:
+- Custom Python processors load but display no properties
+- PutSFTP processor cannot connect to remote server
+- OpenFlow Runtime logs show "Failed to download dependencies for Python Processor" or connection failures
+
+Attach this integration to your OpenFlow service when configuring the SPCS deployment.
+
+---
+
+## Step 2: Create OpenFlow Service User
 
 OpenFlow requires a Snowflake service user with RSA key pair authentication for BYOC deployments.
-If using Openflow on SPCS you can skip this step.
+If using OpenFlow on SPCS you can skip this step.
 
 ### Generate RSA Key Pair
 
@@ -83,7 +134,7 @@ Expected grants: SYSADMIN, OPENFLOWREPLICATE
 
 ---
 
-## Step 2: Create Database
+## Step 3: Create Database
 
 ```sql
 CREATE DATABASE IF NOT EXISTS BOEGAMINGREPORT;
@@ -91,7 +142,7 @@ CREATE DATABASE IF NOT EXISTS BOEGAMINGREPORT;
 
 ---
 
-## Step 3: Grant Permissions for Setup (Optional)
+## Step 4: Grant Permissions for Setup (Optional)
 
 If you're using a role other than ACCOUNTADMIN to create objects (e.g., for Cursor IDE or a setup service account), grant the necessary permissions:
 
@@ -111,7 +162,7 @@ USE ROLE YOUR_SETUP_ROLE;
 
 ---
 
-## Step 4: Create Schema
+## Step 5: Create Schema
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS BOEGAMINGREPORT.DEMO;
@@ -131,7 +182,7 @@ GRANT CREATE STAGE ON SCHEMA BOEGAMINGREPORT.DEMO TO ROLE YOUR_SETUP_ROLE;
 
 ---
 
-## Step 5: Create Stage for Document AI
+## Step 6: Create Stage for Document AI
 
 ```sql
 CREATE STAGE IF NOT EXISTS BOEGAMINGREPORT.DEMO.boe_documents
@@ -149,7 +200,7 @@ This stage will be used to:
 
 ---
 
-## Step 6: Create Source Table
+## Step 7: Create Source Table
 
 ```sql
 CREATE TABLE IF NOT EXISTS BOEGAMINGREPORT.DEMO.poker_tournaments (
@@ -163,7 +214,7 @@ This table stores source JSON transaction data from poker tournaments.
 
 ---
 
-## Step 7: Create Audit Table
+## Step 8: Create Audit Table
 
 ```sql
 CREATE TABLE IF NOT EXISTS BOEGAMINGREPORT.DEMO.regulatory_batches (
@@ -193,7 +244,7 @@ This table provides complete audit trail:
 
 ---
 
-## Step 8: Create XML Generation Function
+## Step 9: Create XML Generation Function
 
 ```sql
 CREATE OR REPLACE FUNCTION BOEGAMINGREPORT.DEMO.generate_poker_xml(
@@ -281,7 +332,7 @@ This function iterates over the `json_array` parameter to include transaction da
 
 ---
 
-## Step 9: Create Batch Generation Procedure
+## Step 10: Create Batch Generation Procedure
 
 ```sql
 CREATE OR REPLACE PROCEDURE BOEGAMINGREPORT.DEMO.generate_regulatory_batch()
@@ -357,7 +408,7 @@ OpenFlow polls every 1 minute for READY batches, ensuring quick pickup.
 
 ---
 
-## Step 10: Insert Sample Transaction Data
+## Step 11: Insert Sample Transaction Data
 
 ```sql
 -- Generate sample poker tournament transactions
@@ -378,7 +429,7 @@ This creates 50 sample transactions with current timestamps for testing batch ge
 
 ---
 
-## Step 11: Generate Initial Test Batch
+## Step 12: Generate Initial Test Batch
 
 ```sql
 CALL BOEGAMINGREPORT.DEMO.generate_regulatory_batch();
@@ -438,7 +489,7 @@ LIMIT 1;
 
 ---
 
-## Step 12: Grant Permissions for OpenFlow (Required for Runtime)
+## Step 13: Grant Permissions for OpenFlow (Required for Runtime)
 
 OpenFlow needs read access to query batches and write access to update status. Grant these permissions to the OPENFLOWREPLICATE role (created in Step 1):
 

@@ -3,6 +3,8 @@ from nifiapi.properties import PropertyDescriptor, StandardValidators, Expressio
 from nifiapi.relationship import Relationship
 from typing import List
 import io
+import re
+import textwrap
 
 
 class PrepareRegulatoryFile(FlowFileTransform):
@@ -20,7 +22,7 @@ class PrepareRegulatoryFile(FlowFileTransform):
         implements = ['org.apache.nifi.python.processor.FlowFileTransform']
 
     class ProcessorDetails:
-        version = '0.0.1-SNAPSHOT'
+        version = '0.0.2'
         description = 'Signs XML with XAdES-BES, compresses with ZIP/Deflate, and encrypts with AES-256 for Spanish DGOJ regulatory compliance'
         tags = ['xml', 'signature', 'encryption', 'xades', 'regulatory', 'dgoj', 'spain']
         dependencies = ['lxml', 'signxml', 'cryptography', 'pyzipper']
@@ -30,20 +32,21 @@ class PrepareRegulatoryFile(FlowFileTransform):
 
         # Define properties
         self.certificate_path = PropertyDescriptor(
-            name="Certificate Path",
-            description="Path to X.509 certificate file (.pem or .crt) for XAdES-BES signature. This is the public certificate.",
-            required=True,
-            validators=[StandardValidators.NON_EMPTY_VALIDATOR],
-            expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES
-        )
-
-        self.private_key_path = PropertyDescriptor(
-            name="Private Key Path",
-            description="Path to private key file (.pem) for XAdES-BES signature. Must correspond to the certificate.",
+            name="Certificate",
+            description="X.509 certificate for XAdES-BES signature. Accepts either a file path (.pem or .crt) or the PEM content directly (must start with '-----BEGIN CERTIFICATE-----'). Use PEM content for AWS Secrets Manager integration.",
             required=True,
             validators=[StandardValidators.NON_EMPTY_VALIDATOR],
             expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
-            sensitive=False
+            sensitive=True
+        )
+
+        self.private_key_path = PropertyDescriptor(
+            name="Private Key",
+            description="Private key for XAdES-BES signature. Accepts either a file path (.pem) or the PEM content directly (must start with '-----BEGIN'). Use PEM content for AWS Secrets Manager integration.",
+            required=True,
+            validators=[StandardValidators.NON_EMPTY_VALIDATOR],
+            expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
+            sensitive=True
         )
 
         self.private_key_password = PropertyDescriptor(
@@ -171,16 +174,26 @@ class PrepareRegulatoryFile(FlowFileTransform):
         root = etree.fromstring(xml_content)
 
         # Load certificate (handle both file path and direct PEM content)
-        if cert_path.startswith('-----BEGIN'):
-            cert_data = cert_path.encode('utf-8')
+        if self._is_pem_content(cert_path):
+            self.logger.info("Certificate provided as PEM content ({} chars)".format(len(cert_path)))
+            try:
+                cert_data = self._normalize_pem(cert_path)
+            except ValueError as e:
+                raise ValueError("Failed to parse certificate PEM: {}".format(str(e)))
         else:
+            self.logger.info("Certificate provided as file path: {}".format(cert_path))
             with open(cert_path, 'rb') as f:
                 cert_data = f.read()
 
         # Load private key (handle both file path and direct PEM content)
-        if key_path.startswith('-----BEGIN'):
-            key_data = key_path.encode('utf-8')
+        if self._is_pem_content(key_path):
+            self.logger.info("Private key provided as PEM content ({} chars)".format(len(key_path)))
+            try:
+                key_data = self._normalize_pem(key_path)
+            except ValueError as e:
+                raise ValueError("Failed to parse private key PEM: {}".format(str(e)))
         else:
+            self.logger.info("Private key provided as file path: {}".format(key_path))
             with open(key_path, 'rb') as f:
                 key_data = f.read()
 
@@ -237,6 +250,108 @@ class PrepareRegulatoryFile(FlowFileTransform):
 
         # Return ZIP content
         return zip_buffer.getvalue()
+
+    def _normalize_pem(self, pem_string: str) -> bytes:
+        """
+        Normalize PEM content to handle common formatting issues from secrets managers,
+        parameter providers, and JSON serialization.
+
+        Handles:
+        - Escaped newlines (literal \\n characters)
+        - Windows line endings (\\r\\n)
+        - Missing or extra whitespace
+        - Base64 content without proper line wrapping
+
+        Args:
+            pem_string: Raw PEM string that may have formatting issues
+
+        Returns:
+            Properly formatted PEM as bytes
+
+        Raises:
+            ValueError: If PEM structure is invalid
+        """
+        # Strip leading/trailing whitespace
+        content = pem_string.strip()
+
+        # Handle escaped newlines (literal \n as two characters)
+        # This is common when PEM is stored in JSON or passed through some parameter providers
+        if '\\n' in content and '\n' not in content:
+            self.logger.info("Detected escaped newlines in PEM, converting to actual newlines")
+            content = content.replace('\\n', '\n')
+
+        # Also handle escaped carriage returns
+        content = content.replace('\\r', '')
+
+        # Normalize Windows line endings
+        content = content.replace('\r\n', '\n')
+        content = content.replace('\r', '\n')
+
+        # Extract the PEM type and base64 content
+        # Match patterns like: -----BEGIN CERTIFICATE-----, -----BEGIN PRIVATE KEY-----, etc.
+        pem_pattern = re.compile(
+            r'(-----BEGIN [A-Z0-9 ]+-----)\s*(.+?)\s*(-----END [A-Z0-9 ]+-----)',
+            re.DOTALL
+        )
+
+        match = pem_pattern.search(content)
+        if not match:
+            raise ValueError(
+                "Invalid PEM format: missing BEGIN/END markers. "
+                "Content starts with: {}...".format(content[:50] if len(content) > 50 else content)
+            )
+
+        begin_marker = match.group(1)
+        base64_content = match.group(2)
+        end_marker = match.group(3)
+
+        # Clean the base64 content: remove all whitespace
+        base64_clean = re.sub(r'\s+', '', base64_content)
+
+        # Validate base64 characters
+        if not re.match(r'^[A-Za-z0-9+/=]+$', base64_clean):
+            raise ValueError("Invalid PEM format: base64 content contains invalid characters")
+
+        # Re-wrap base64 at 64 characters (standard PEM line length)
+        base64_wrapped = '\n'.join(textwrap.wrap(base64_clean, 64))
+
+        # Reconstruct the PEM
+        normalized_pem = "{}\n{}\n{}".format(begin_marker, base64_wrapped, end_marker)
+
+        self.logger.debug("Normalized PEM: {} chars input -> {} chars output".format(
+            len(pem_string), len(normalized_pem)
+        ))
+
+        return normalized_pem.encode('utf-8')
+
+    def _is_pem_content(self, value: str) -> bool:
+        """
+        Check if a value appears to be PEM content rather than a file path.
+
+        Handles cases where PEM content may have escaped newlines or other formatting.
+
+        Args:
+            value: The property value to check
+
+        Returns:
+            True if the value appears to be PEM content, False if it's likely a file path
+        """
+        if not value:
+            return False
+
+        # Direct check for proper PEM header
+        if value.startswith('-----BEGIN'):
+            return True
+
+        # Check for escaped PEM header (common when stored in JSON/secrets manager)
+        if value.startswith('-----BEGIN') or '-----BEGIN' in value[:100]:
+            return True
+
+        # Check for escaped version
+        if value.startswith('\\n-----BEGIN') or value.startswith(' -----BEGIN'):
+            return True
+
+        return False
 
     def getRelationships(self) -> List[Relationship]:
         return [

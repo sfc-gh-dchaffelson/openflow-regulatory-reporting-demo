@@ -4,43 +4,138 @@
 
 Custom Apache NiFi Python processor that prepares XML data for Spanish DGOJ (Dirección General de Ordenación del Juego) regulatory submission as required by BOE-A-2024-12639.
 
-## Purpose
-
 Standard NiFi processors do not support:
-- XAdES-BES digital signature format (required by BOE-A-2024-12639)
-- AES-256 encrypted ZIP files with passwords (WinZip-compatible format required by specifications)
+- **XAdES-BES digital signature format** - Required by BOE-A-2024-12639 specifications
+- **AES-256 encrypted ZIP files** - WinZip-compatible password-protected archives required by DGOJ
 
-This custom processor handles these specific requirements by performing three transformations:
+This custom processor handles these three critical security transformations:
 
-1. **XAdES-BES Digital Signature** - Signs XML using X.509 certificates with SHA-256 hash
-2. **ZIP Compression** - Compresses using Deflate algorithm
-3. **AES-256 Encryption** - Password-protects ZIP with WinZip-compatible AES-256
+1. **XAdES-BES 1.3.2 Digital Signature** with SHA-256 hash
+2. **ZIP Compression** using Deflate algorithm
+3. **AES-256 Encryption** with 50-character password
 
-## Features
+---
 
-- Supports both "enveloped" (signature embedded in XML) and "enveloping" (separate signature file) methods
-- Uses industry-standard Python libraries (signxml, pyzipper)
-- Sensitive properties for secure credential management
-- Expression Language support for dynamic configuration
-- Comprehensive error handling and logging
+## Pre-Built NAR
 
-## Properties
+The NAR is already built and included in the repository:
+
+```
+dist/prepare_regulatory_file-0.0.1.nar
+```
+
+File size: ~4KB (thin NAR containing only processor code)
+
+**Skip to "Upload to OpenFlow" section below** unless you need to rebuild.
+
+---
+
+## Building from Source (Optional)
+
+If you've made changes to the processor code or need to rebuild:
+
+### Install Build Tools
+
+```bash
+pip install hatch hatch-datavolo-nar
+```
+
+### Build NAR
+
+```bash
+cd custom_processors/PrepareRegulatoryFile
+hatch build --target nar
+```
+
+Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
+
+**Note:** The NAR contains only the processor code. Dependencies (lxml, signxml, cryptography, pyzipper) are installed by OpenFlow from PyPI when the processor is first loaded.
+
+---
+
+## Upload to OpenFlow
+
+### Via Web UI
+
+1. Open OpenFlow in web browser
+2. Click main menu (Username) in top-right corner
+3. Select **Controller Settings**
+4. Navigate to **Local Extensions** tab
+5. Click **Upload Extension** or drag-and-drop the NAR file
+6. Select `dist/prepare_regulatory_file-0.0.1.nar`
+7. Click **Upload**
+8. Installation takes a few seconds
+9. You may need to manually refresh your browser
+
+### Via CLI
+
+```bash
+nipyapi --profile <profile> ci upload_nar --file_path custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.1.nar
+```
+
+---
+
+## Verify Installation
+
+1. In OpenFlow canvas, click **Add Processor** (+)
+2. Search for `PrepareRegulatoryFile`
+3. You should see the processor with tags: xml, signature, encryption, xades, regulatory, dgoj, spain
+4. Add the processor to the canvas
+5. Right-click the processor → **Configure**
+6. Verify **Properties** tab shows all properties listed below
+7. Verify **Relationships** tab shows: success, failure, original
+
+If properties or relationships are not showing, see Troubleshooting section below.
+
+---
+
+## Properties Reference
 
 ### Required Properties
 
 | Property | Description | Sensitive | Expression Language |
 |----------|-------------|-----------|---------------------|
-| Certificate Path | Path to X.509 certificate file (.pem or .crt) | No | Yes |
-| Private Key Path | Path to private key file (.pem) | No | Yes |
+| Certificate | X.509 certificate - file path (.pem/.crt) or PEM content directly | Yes | Yes |
+| Private Key | Private key - file path (.pem) or PEM content directly | Yes | Yes |
 | ZIP Encryption Password | 50-character password for AES-256 | Yes | Yes |
+| Signature Method | 'enveloped' or 'enveloping' | No | No |
+| XML Filename | Filename for XML inside ZIP | No | Yes |
+
+| Property | Default |
+|----------|---------|
+| Signature Method | enveloped |
+| XML Filename | enveloped.xml |
 
 ### Optional Properties
 
 | Property | Description | Default | Sensitive |
 |----------|-------------|---------|-----------|
 | Private Key Password | Password for encrypted private key | (empty) | Yes |
-| Signature Method | 'enveloped' or 'enveloping' | enveloped | No |
-| XML Filename | Filename for XML inside ZIP | enveloped.xml | No |
+
+**Note:** Properties support Expression Language for dynamic configuration (e.g., `#{DGOJ Cert}` parameter references).
+
+### AWS Secrets Manager Integration
+
+To use certificates stored in AWS Secrets Manager via the External Parameter Provider:
+
+1. Store the full PEM content (including `-----BEGIN CERTIFICATE-----` header) in your secret
+2. Configure the External Parameter Provider to reference the secret
+3. Use parameter syntax in the processor properties: `#{your-parameter-name}`
+
+The processor auto-detects PEM content vs file paths by checking if the value starts with `-----BEGIN`.
+
+---
+
+## Relationships
+
+**Input:** XML content in flowfile
+
+**Output Relationships:**
+- **success** → Signed, compressed, encrypted ZIP file
+- **failure** → Original flowfile with `error.message` attribute
+- **original** → Original unsigned content (typically auto-terminated)
+
+---
 
 ## Dependencies
 
@@ -53,23 +148,52 @@ The processor declares these dependencies which OpenFlow installs from PyPI:
 
 Dependencies are NOT bundled in the NAR. OpenFlow downloads them from PyPI when the processor is first loaded.
 
-## Installation
+**Requirements:**
+- **OpenFlow BYOC:** Direct internet connectivity to PyPI (usually available by default)
+- **OpenFlow SPCS:** External Access Integration configured for PyPI access (see below)
 
-### Build the NAR Package
+---
 
-See **[BUILD.md](BUILD.md)** for complete build instructions.
+## Troubleshooting
 
-Quick build:
+### Processor Not Appearing After Upload
+
+Verify NAR structure:
 ```bash
-cd PrepareRegulatoryFile
-hatch build --target nar
+unzip -l custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.1.nar
+```
+Should show `prepare_regulatory_file/PrepareRegulatoryFile.py` and `META-INF/MANIFEST.MF`.
+
+### Processor Properties or Relationships Not Showing
+
+If properties or relationships are not visible in the Configure dialog, the processor failed to load properly.
+
+**Common Cause - OpenFlow on SPCS:** Missing External Access Integration for PyPI.
+
+**Symptoms:**
+- Processor appears on canvas after upload
+- No properties displayed in Configure dialog
+- All properties show as `sensitive: true`
+- OpenFlow Runtime logs show: "Failed to download dependencies for Python Processor"
+
+**Solution:** Ensure the OpenFlow External Access Integration includes PyPI access:
+```sql
+-- Check with your OpenFlow administrator or see OpenFlow SPCS documentation
+-- PyPI endpoints needed:
+--   pypi.org:443
+--   files.pythonhosted.org:443
 ```
 
-### Deploy to OpenFlow
+**Other causes:**
+- Syntax errors in `PrepareRegulatoryFile.py` (if modified)
+- Invalid processor class structure
+- Browser cache (try Ctrl+F5 / Cmd+F5)
 
-Upload `dist/prepare_regulatory_file-0.0.1.nar` via OpenFlow UI: Controller Settings > Local Extensions
+### Dependency Installation
 
-See **[PROCESSOR_SETUP.md](../../PROCESSOR_SETUP.md)** for detailed deployment instructions.
+Dependencies install automatically on first use. Wait a few moments if you see temporary errors during initial processor load.
+
+---
 
 ## Usage
 
@@ -92,9 +216,7 @@ See **[PROCESSOR_SETUP.md](../../PROCESSOR_SETUP.md)** for detailed deployment i
 - **Original FlowFile** with error attribute:
   - `error.message`: Description of failure
 
-## Credentials Setup
-
-See **[CREDENTIALS_SETUP.md](../../CREDENTIALS_SETUP.md)** for generating demo certificates.
+---
 
 ## Integration with Demo Flow
 
@@ -113,12 +235,20 @@ GenerateFlowFile (1-min timer)
 ```
 
 **Parameter Configuration:**
-- Certificate Path: `#{DGOJ Cert}`
-- Private Key Path: `#{DGOJ Private Key}`
+- Certificate: `#{DGOJ Cert}` (file path or PEM content)
+- Private Key: `#{DGOJ Private Key}` (file path or PEM content)
 - Private Key Password: `#{DGOJ Private Key Password}`
 - ZIP Encryption Password: `#{DGOJ Zip Password}`
 - Signature Method: `enveloped`
 - XML Filename: `enveloped.xml`
+
+---
+
+## Credentials
+
+See `../../credentials/README.md` for generating demo certificates and keys.
+
+---
 
 ## Technical Details
 

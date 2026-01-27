@@ -21,7 +21,7 @@ This custom processor handles these three critical security transformations:
 The NAR is already built and included in the repository:
 
 ```
-dist/prepare_regulatory_file-0.0.1.nar
+dist/prepare_regulatory_file-0.0.3.nar
 ```
 
 File size: ~4KB (thin NAR containing only processor code)
@@ -47,7 +47,7 @@ cd custom_processors/PrepareRegulatoryFile
 hatch build --target nar
 ```
 
-Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
+Output: `dist/prepare_regulatory_file-0.0.3.nar` (~4KB)
 
 **Note:** The NAR contains only the processor code. Dependencies (lxml, signxml, cryptography, pyzipper) are installed by OpenFlow from PyPI when the processor is first loaded.
 
@@ -62,7 +62,7 @@ Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
 3. Select **Controller Settings**
 4. Navigate to **Local Extensions** tab
 5. Click **Upload Extension** or drag-and-drop the NAR file
-6. Select `dist/prepare_regulatory_file-0.0.1.nar`
+6. Select `dist/prepare_regulatory_file-0.0.3.nar`
 7. Click **Upload**
 8. Installation takes a few seconds
 9. You may need to manually refresh your browser
@@ -70,7 +70,7 @@ Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
 ### Via CLI
 
 ```bash
-nipyapi --profile <profile> ci upload_nar --file_path custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.1.nar
+nipyapi --profile <profile> ci upload_nar --file_path custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.3.nar
 ```
 
 ---
@@ -91,20 +91,33 @@ If properties or relationships are not showing, see Troubleshooting section belo
 
 ## Properties Reference
 
-### Required Properties
+The processor supports two input modes for certificates and keys:
+- **File path mode**: Non-sensitive properties for asset-based workflows
+- **PEM content mode**: Sensitive properties for AWS Secrets Manager integration
+
+For each credential type (certificate and private key), configure exactly one property.
+
+### Certificate Properties (configure one)
 
 | Property | Description | Sensitive | Expression Language |
 |----------|-------------|-----------|---------------------|
-| Certificate | X.509 certificate - file path (.pem/.crt) or PEM content directly | Yes | Yes |
-| Private Key | Private key - file path (.pem) or PEM content directly | Yes | Yes |
-| ZIP Encryption Password | 50-character password for AES-256 | Yes | Yes |
-| Signature Method | 'enveloped' or 'enveloping' | No | No |
-| XML Filename | Filename for XML inside ZIP | No | Yes |
+| Certificate Path | File path to X.509 certificate (.pem/.crt) | No | Yes |
+| Certificate | X.509 certificate as PEM content | Yes | Yes |
 
-| Property | Default |
-|----------|---------|
-| Signature Method | enveloped |
-| XML Filename | enveloped.xml |
+### Private Key Properties (configure one)
+
+| Property | Description | Sensitive | Expression Language |
+|----------|-------------|-----------|---------------------|
+| Private Key Path | File path to private key (.pem) | No | Yes |
+| Private Key | Private key as PEM content | Yes | Yes |
+
+### Other Required Properties
+
+| Property | Description | Sensitive | Expression Language | Default |
+|----------|-------------|-----------|---------------------|---------|
+| ZIP Encryption Password | 50-character password for AES-256 | Yes | Yes | - |
+| Signature Method | 'enveloped' or 'enveloping' | No | No | enveloped |
+| XML Filename | Filename for XML inside ZIP | No | Yes | enveloped.xml |
 
 ### Optional Properties
 
@@ -112,17 +125,34 @@ If properties or relationships are not showing, see Troubleshooting section belo
 |----------|-------------|---------|-----------|
 | Private Key Password | Password for encrypted private key | (empty) | Yes |
 
-**Note:** Properties support Expression Language for dynamic configuration (e.g., `#{DGOJ Cert}` parameter references).
+**Note:** Properties support Expression Language for dynamic configuration (e.g., `#{DGOJ Cert Path}` parameter references).
 
-### AWS Secrets Manager Integration
+---
 
-To use certificates stored in AWS Secrets Manager via the External Parameter Provider:
+## Configuration Workflows
+
+### Workflow A: Asset-Based (File Paths)
+
+Use this approach when certificates are stored as files in parameter context assets.
+
+1. Upload certificate and key files as assets in your parameter context
+2. Create non-sensitive parameters that reference the assets
+3. Configure processor with path properties:
+   - **Certificate Path**: `#{DGOJ Cert Path}`
+   - **Private Key Path**: `#{DGOJ Private Key Path}`
+
+### Workflow B: AWS Secrets Manager (PEM Content)
+
+Use this approach when certificates are stored in AWS Secrets Manager.
 
 1. Store the full PEM content (including `-----BEGIN CERTIFICATE-----` header) in your secret
 2. Configure the External Parameter Provider to reference the secret
-3. Use parameter syntax in the processor properties: `#{your-parameter-name}`
+3. Create sensitive parameters in your parameter context
+4. Configure processor with PEM properties:
+   - **Certificate**: `#{DGOJ Cert}`
+   - **Private Key**: `#{DGOJ Private Key}`
 
-The processor auto-detects PEM content vs file paths by checking if the value starts with `-----BEGIN`.
+The processor normalizes PEM content to handle common formatting issues from secrets managers (escaped newlines, etc.).
 
 ---
 
@@ -160,7 +190,7 @@ Dependencies are NOT bundled in the NAR. OpenFlow downloads them from PyPI when 
 
 Verify NAR structure:
 ```bash
-unzip -l custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.1.nar
+unzip -l custom_processors/PrepareRegulatoryFile/dist/prepare_regulatory_file-0.0.3.nar
 ```
 Should show `prepare_regulatory_file/PrepareRegulatoryFile.py` and `META-INF/MANIFEST.MF`.
 
@@ -234,9 +264,17 @@ GenerateFlowFile (1-min timer)
   → ExecuteSQL (update Snowflake status to UPLOADED)
 ```
 
-**Parameter Configuration:**
-- Certificate: `#{DGOJ Cert}` (file path or PEM content)
-- Private Key: `#{DGOJ Private Key}` (file path or PEM content)
+**Parameter Configuration (Asset-Based):**
+- Certificate Path: `#{DGOJ Cert Path}` (references asset file)
+- Private Key Path: `#{DGOJ Private Key Path}` (references asset file)
+- Private Key Password: `#{DGOJ Private Key Password}`
+- ZIP Encryption Password: `#{DGOJ Zip Password}`
+- Signature Method: `enveloped`
+- XML Filename: `enveloped.xml`
+
+**Parameter Configuration (Secrets Manager):**
+- Certificate: `#{DGOJ Cert}` (PEM content from secrets manager)
+- Private Key: `#{DGOJ Private Key}` (PEM content from secrets manager)
 - Private Key Password: `#{DGOJ Private Key Password}`
 - ZIP Encryption Password: `#{DGOJ Zip Password}`
 - Signature Method: `enveloped`

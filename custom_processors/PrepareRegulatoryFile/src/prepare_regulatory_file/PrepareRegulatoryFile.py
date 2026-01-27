@@ -16,13 +16,21 @@ class PrepareRegulatoryFile(FlowFileTransform):
 
     This processor handles the complete transformation pipeline required
     by Spanish gaming regulation BOE-A-2024-12639.
+
+    Certificate and private key can be provided in two ways:
+    - File path mode: Use 'Certificate Path' and 'Private Key Path' (non-sensitive)
+      for file paths, which can reference parameter context assets.
+    - PEM content mode: Use 'Certificate' and 'Private Key' (sensitive) for direct
+      PEM content from AWS Secrets Manager via External Parameter Provider.
+
+    For each credential type, provide exactly one of the two options.
     """
 
     class Java:
         implements = ['org.apache.nifi.python.processor.FlowFileTransform']
 
     class ProcessorDetails:
-        version = '0.0.2'
+        version = '0.0.3'
         description = 'Signs XML with XAdES-BES, compresses with ZIP/Deflate, and encrypts with AES-256 for Spanish DGOJ regulatory compliance'
         tags = ['xml', 'signature', 'encryption', 'xades', 'regulatory', 'dgoj', 'spain']
         dependencies = ['lxml', 'signxml', 'cryptography', 'pyzipper']
@@ -30,20 +38,41 @@ class PrepareRegulatoryFile(FlowFileTransform):
     def __init__(self, *args, **kwargs):
         super().__init__()
 
-        # Define properties
+        # Certificate - File path mode (non-sensitive, can reference assets)
         self.certificate_path = PropertyDescriptor(
+            name="Certificate Path",
+            description="File path to X.509 certificate (.pem or .crt) for XAdES-BES signature. Use this for asset-based workflows. Mutually exclusive with 'Certificate' property.",
+            required=False,
+            validators=[StandardValidators.NON_EMPTY_VALIDATOR],
+            expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
+            sensitive=False
+        )
+
+        # Certificate - PEM content mode (sensitive, for secrets manager)
+        self.certificate_pem = PropertyDescriptor(
             name="Certificate",
-            description="X.509 certificate for XAdES-BES signature. Accepts either a file path (.pem or .crt) or the PEM content directly (must start with '-----BEGIN CERTIFICATE-----'). Use PEM content for AWS Secrets Manager integration.",
-            required=True,
+            description="X.509 certificate as PEM content (must start with '-----BEGIN CERTIFICATE-----'). Use this for AWS Secrets Manager integration via External Parameter Provider. Mutually exclusive with 'Certificate Path' property.",
+            required=False,
             validators=[StandardValidators.NON_EMPTY_VALIDATOR],
             expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
             sensitive=True
         )
 
+        # Private Key - File path mode (non-sensitive, can reference assets)
         self.private_key_path = PropertyDescriptor(
+            name="Private Key Path",
+            description="File path to private key (.pem) for XAdES-BES signature. Use this for asset-based workflows. Mutually exclusive with 'Private Key' property.",
+            required=False,
+            validators=[StandardValidators.NON_EMPTY_VALIDATOR],
+            expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
+            sensitive=False
+        )
+
+        # Private Key - PEM content mode (sensitive, for secrets manager)
+        self.private_key_pem = PropertyDescriptor(
             name="Private Key",
-            description="Private key for XAdES-BES signature. Accepts either a file path (.pem) or the PEM content directly (must start with '-----BEGIN'). Use PEM content for AWS Secrets Manager integration.",
-            required=True,
+            description="Private key as PEM content (must start with '-----BEGIN'). Use this for AWS Secrets Manager integration via External Parameter Provider. Mutually exclusive with 'Private Key Path' property.",
+            required=False,
             validators=[StandardValidators.NON_EMPTY_VALIDATOR],
             expression_language_scope=ExpressionLanguageScope.FLOWFILE_ATTRIBUTES,
             sensitive=True
@@ -86,7 +115,9 @@ class PrepareRegulatoryFile(FlowFileTransform):
 
         self.descriptors = [
             self.certificate_path,
+            self.certificate_pem,
             self.private_key_path,
+            self.private_key_pem,
             self.private_key_password,
             self.zip_password,
             self.signature_method,
@@ -111,9 +142,31 @@ class PrepareRegulatoryFile(FlowFileTransform):
             # Read XML content
             xml_content = flowfile.getContentsAsBytes()
 
-            # Get property values
+            # Get certificate properties (path mode vs PEM mode)
             cert_path = context.getProperty(self.certificate_path).evaluateAttributeExpressions(flowfile).getValue()
+            cert_pem = context.getProperty(self.certificate_pem).evaluateAttributeExpressions(flowfile).getValue()
+
+            # Get private key properties (path mode vs PEM mode)
             key_path = context.getProperty(self.private_key_path).evaluateAttributeExpressions(flowfile).getValue()
+            key_pem = context.getProperty(self.private_key_pem).evaluateAttributeExpressions(flowfile).getValue()
+
+            # Validate certificate input (exactly one required)
+            cert_path_set = cert_path is not None and cert_path.strip() != ''
+            cert_pem_set = cert_pem is not None and cert_pem.strip() != ''
+            if cert_path_set and cert_pem_set:
+                raise ValueError("Both 'Certificate Path' and 'Certificate' are set. Please configure only one.")
+            if not cert_path_set and not cert_pem_set:
+                raise ValueError("Neither 'Certificate Path' nor 'Certificate' is set. Please configure one.")
+
+            # Validate private key input (exactly one required)
+            key_path_set = key_path is not None and key_path.strip() != ''
+            key_pem_set = key_pem is not None and key_pem.strip() != ''
+            if key_path_set and key_pem_set:
+                raise ValueError("Both 'Private Key Path' and 'Private Key' are set. Please configure only one.")
+            if not key_path_set and not key_pem_set:
+                raise ValueError("Neither 'Private Key Path' nor 'Private Key' is set. Please configure one.")
+
+            # Get other properties
             key_password_value = context.getProperty(self.private_key_password).evaluateAttributeExpressions(flowfile).getValue()
             zip_password = context.getProperty(self.zip_password).evaluateAttributeExpressions(flowfile).getValue()
             signature_method = context.getProperty(self.signature_method).getValue()
@@ -122,9 +175,15 @@ class PrepareRegulatoryFile(FlowFileTransform):
             # Convert password to bytes if provided
             key_password = key_password_value.encode('utf-8') if key_password_value else None
 
+            # Determine certificate and key sources
+            cert_source = ('pem', cert_pem) if cert_pem_set else ('path', cert_path)
+            key_source = ('pem', key_pem) if key_pem_set else ('path', key_path)
+
+            self.logger.info("Certificate source: {}, Private key source: {}".format(cert_source[0], key_source[0]))
+
             # Step 1: Sign XML with XAdES-BES
             self.logger.info("Signing XML with XAdES-BES signature method: {}".format(signature_method))
-            signed_xml = self._sign_xml(xml_content, cert_path, key_path, key_password, signature_method)
+            signed_xml = self._sign_xml(xml_content, cert_source, key_source, key_password, signature_method)
 
             # Step 2: Create ZIP with AES-256 encryption
             self.logger.info("Creating encrypted ZIP with AES-256")
@@ -151,14 +210,14 @@ class PrepareRegulatoryFile(FlowFileTransform):
                 attributes={"error.message": str(e)}
             )
 
-    def _sign_xml(self, xml_content, cert_path, key_path, key_password, method):
+    def _sign_xml(self, xml_content, cert_source, key_source, key_password, method):
         """
         Sign XML content using XAdES-BES signature.
 
         Args:
             xml_content: XML content as bytes
-            cert_path: Path to certificate file or PEM content
-            key_path: Path to private key file or PEM content
+            cert_source: Tuple of (source_type, value) where source_type is 'path' or 'pem'
+            key_source: Tuple of (source_type, value) where source_type is 'path' or 'pem'
             key_password: Password for private key (or None)
             method: 'enveloped' or 'enveloping'
 
@@ -173,28 +232,30 @@ class PrepareRegulatoryFile(FlowFileTransform):
         # Parse XML
         root = etree.fromstring(xml_content)
 
-        # Load certificate (handle both file path and direct PEM content)
-        if self._is_pem_content(cert_path):
-            self.logger.info("Certificate provided as PEM content ({} chars)".format(len(cert_path)))
+        # Load certificate based on source type
+        cert_type, cert_value = cert_source
+        if cert_type == 'pem':
+            self.logger.info("Loading certificate from PEM content ({} chars)".format(len(cert_value)))
             try:
-                cert_data = self._normalize_pem(cert_path)
+                cert_data = self._normalize_pem(cert_value)
             except ValueError as e:
                 raise ValueError("Failed to parse certificate PEM: {}".format(str(e)))
         else:
-            self.logger.info("Certificate provided as file path: {}".format(cert_path))
-            with open(cert_path, 'rb') as f:
+            self.logger.info("Loading certificate from file: {}".format(cert_value))
+            with open(cert_value, 'rb') as f:
                 cert_data = f.read()
 
-        # Load private key (handle both file path and direct PEM content)
-        if self._is_pem_content(key_path):
-            self.logger.info("Private key provided as PEM content ({} chars)".format(len(key_path)))
+        # Load private key based on source type
+        key_type, key_value = key_source
+        if key_type == 'pem':
+            self.logger.info("Loading private key from PEM content ({} chars)".format(len(key_value)))
             try:
-                key_data = self._normalize_pem(key_path)
+                key_data = self._normalize_pem(key_value)
             except ValueError as e:
                 raise ValueError("Failed to parse private key PEM: {}".format(str(e)))
         else:
-            self.logger.info("Private key provided as file path: {}".format(key_path))
-            with open(key_path, 'rb') as f:
+            self.logger.info("Loading private key from file: {}".format(key_value))
+            with open(key_value, 'rb') as f:
                 key_data = f.read()
 
         # Decrypt private key if password provided (try with password, fallback to no password)
@@ -323,35 +384,6 @@ class PrepareRegulatoryFile(FlowFileTransform):
         ))
 
         return normalized_pem.encode('utf-8')
-
-    def _is_pem_content(self, value: str) -> bool:
-        """
-        Check if a value appears to be PEM content rather than a file path.
-
-        Handles cases where PEM content may have escaped newlines or other formatting.
-
-        Args:
-            value: The property value to check
-
-        Returns:
-            True if the value appears to be PEM content, False if it's likely a file path
-        """
-        if not value:
-            return False
-
-        # Direct check for proper PEM header
-        if value.startswith('-----BEGIN'):
-            return True
-
-        # Check for escaped PEM header (common when stored in JSON/secrets manager)
-        if value.startswith('-----BEGIN') or '-----BEGIN' in value[:100]:
-            return True
-
-        # Check for escaped version
-        if value.startswith('\\n-----BEGIN') or value.startswith(' -----BEGIN'):
-            return True
-
-        return False
 
     def getRelationships(self) -> List[Relationship]:
         return [

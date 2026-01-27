@@ -565,7 +565,7 @@
       "bundle" : {
         "artifact" : "nifi-record-serialization-services-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "CONTROLLER_SERVICE",
@@ -573,7 +573,7 @@
         "bundle" : {
           "artifact" : "nifi-standard-services-api-nar",
           "group" : "org.apache.nifi",
-          "version" : "2026.1.15.20"
+          "version" : "2026.1.22.19"
         },
         "type" : "org.apache.nifi.serialization.RecordSetWriterFactory"
       } ],
@@ -734,7 +734,7 @@
       "bundle" : {
         "artifact" : "runtime-snowflake-connection-service-nar",
         "group" : "com.snowflake.openflow.runtime",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "CONTROLLER_SERVICE",
@@ -742,7 +742,7 @@
         "bundle" : {
           "artifact" : "nifi-standard-services-api-nar",
           "group" : "org.apache.nifi",
-          "version" : "2026.1.15.20"
+          "version" : "2026.1.22.19"
         },
         "type" : "org.apache.nifi.dbcp.DBCPService"
       } ],
@@ -895,7 +895,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -949,7 +949,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1072,7 +1072,7 @@
       "bundle" : {
         "artifact" : "nifi-update-attribute-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1153,7 +1153,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1243,7 +1243,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1355,7 +1355,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1452,7 +1452,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1597,11 +1597,11 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
-      "concurrentlySchedulableTaskCount" : 1,
+      "concurrentlySchedulableTaskCount" : 3,
       "executionNode" : "ALL",
       "groupIdentifier" : "flow-contents-group",
       "identifier" : "56136438-0cc5-3b87-81db-42f8aa2f937f",
@@ -1750,11 +1750,11 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
-      "concurrentlySchedulableTaskCount" : 1,
+      "concurrentlySchedulableTaskCount" : 3,
       "executionNode" : "ALL",
       "groupIdentifier" : "flow-contents-group",
       "identifier" : "6b452af3-a7df-3577-9bd1-8a899d6da29c",
@@ -2020,7 +2020,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -2103,7 +2103,7 @@
       "bundle" : {
         "artifact" : "python-extensions",
         "group" : "org.apache.nifi",
-        "version" : "0.0.2"
+        "version" : "0.0.3"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -2119,14 +2119,28 @@
         "y" : 760.0
       },
       "properties" : {
-        "Private Key" : "#{DGOJ Private Key}",
+        "Private Key Path" : "#{DGOJ Private Key}",
+        "Certificate Path" : "#{DGOJ Cert}",
         "XML Filename" : "enveloped.xml",
         "ZIP Encryption Password" : "#{DGOJ Zip Password}",
         "Private Key Password" : "#{DGOJ Private Key Password}",
-        "Certificate" : "#{DGOJ Cert}",
         "Signature Method" : "enveloped"
       },
       "propertyDescriptors" : {
+        "Private Key Path" : {
+          "displayName" : "Private Key Path",
+          "dynamic" : false,
+          "identifiesControllerService" : false,
+          "name" : "Private Key Path",
+          "sensitive" : false
+        },
+        "Certificate Path" : {
+          "displayName" : "Certificate Path",
+          "dynamic" : false,
+          "identifiesControllerService" : false,
+          "name" : "Certificate Path",
+          "sensitive" : false
+        },
         "Private Key" : {
           "displayName" : "Private Key",
           "dynamic" : false,
@@ -2204,13 +2218,15 @@
         "sensitive" : false,
         "value" : "BoeGamingReport"
       }, {
+        "description" : "",
         "name" : "DGOJ Cert",
         "provided" : false,
-        "sensitive" : true
+        "sensitive" : false
       }, {
+        "description" : "",
         "name" : "DGOJ Private Key",
         "provided" : false,
-        "sensitive" : true
+        "sensitive" : false
       }, {
         "description" : "Password for the DGOJ signing private key",
         "name" : "DGOJ Private Key Password",
@@ -2256,6 +2272,6 @@
   "snapshotMetadata" : {
     "author" : "DCHAFFELSON",
     "flowIdentifier" : "BoeGamingReport",
-    "timestamp" : 1769517911673
+    "timestamp" : 1769528255725
   }
 }

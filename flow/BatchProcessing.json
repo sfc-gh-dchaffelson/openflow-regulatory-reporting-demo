@@ -1,0 +1,11 @@
+{
+  "flow" : {
+    "createdTimestamp" : 1769517404739,
+    "description" : "Collects the unreported Transactions from the Dynamic Table and stages them, then calls the formatting UDF to prepare as XML batches",
+    "identifier" : "BatchProcessing",
+    "lastModifiedTimestamp" : 1769517404739,
+    "name" : "BatchProcessing",
+    "versionCount" : 0
+  },
+  "latest" : false
+}

@@ -425,7 +425,7 @@
       "bundle" : {
         "artifact" : "nifi-oauth2-provider-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "CONTROLLER_SERVICE",
@@ -433,7 +433,7 @@
         "bundle" : {
           "artifact" : "nifi-standard-services-api-nar",
           "group" : "org.apache.nifi",
-          "version" : "2026.1.15.20"
+          "version" : "2026.1.22.19"
         },
         "type" : "org.apache.nifi.oauth2.OAuth2AccessTokenProvider"
       } ],
@@ -572,7 +572,7 @@
       "bundle" : {
         "artifact" : "nifi-ssl-context-service-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "CONTROLLER_SERVICE",
@@ -580,16 +580,16 @@
         "bundle" : {
           "artifact" : "nifi-standard-services-api-nar",
           "group" : "org.apache.nifi",
-          "version" : "2026.1.15.20"
+          "version" : "2026.1.22.19"
         },
-        "type" : "org.apache.nifi.ssl.SSLContextProvider"
+        "type" : "org.apache.nifi.ssl.SSLContextService"
       }, {
         "bundle" : {
           "artifact" : "nifi-standard-services-api-nar",
           "group" : "org.apache.nifi",
-          "version" : "2026.1.15.20"
+          "version" : "2026.1.22.19"
         },
-        "type" : "org.apache.nifi.ssl.SSLContextService"
+        "type" : "org.apache.nifi.ssl.SSLContextProvider"
       } ],
       "groupIdentifier" : "flow-contents-group",
       "identifier" : "fd4c4513-b0ff-39db-a5cf-92cb8bbe83ef",
@@ -696,7 +696,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -715,7 +715,7 @@
         "File Size" : "0B",
         "Batch Size" : "1",
         "Unique FlowFiles" : "false",
-        "Custom Text" : "https://www.boe.es/buscar/pdf/2024/BOE-A-2024-12639-consolidado.pdf",
+        "Custom Text" : "#{Regulatory Source List}",
         "Character Set" : "UTF-8",
         "Data Format" : "Text"
       },
@@ -786,7 +786,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -876,7 +876,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1039,7 +1039,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1151,7 +1151,7 @@
       "bundle" : {
         "artifact" : "nifi-update-attribute-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1248,7 +1248,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1321,7 +1321,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1635,7 +1635,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -1718,7 +1718,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -2032,7 +2032,7 @@
       "bundle" : {
         "artifact" : "nifi-standard-nar",
         "group" : "org.apache.nifi",
-        "version" : "2026.1.15.20"
+        "version" : "2026.1.22.19"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
@@ -2358,6 +2358,12 @@
         "sensitive" : false,
         "value" : "BoeGamingReport"
       }, {
+        "description" : "Newline delimited list of Documents to sync to Sharepoint for Regulatory Reporting Requirements",
+        "name" : "Regulatory Source List",
+        "provided" : false,
+        "sensitive" : false,
+        "value" : "https://www.boe.es/buscar/pdf/2024/BOE-A-2024-12639-consolidado.pdf\nhttps://www.spillemyndigheden.dk/uploads/2023-05/Technical%20requirements%20-%20online%20casino%20and%20betting%20v2.4.pdf\nhttps://www.spillemyndigheden.dk/uploads/2024-11/Spillemyndighedens%20vejledning%20om%20ansvarligt%20spil%20version%201.5.pdf\nhttps://www.spillemyndigheden.dk/uploads/2025-01/SCP.01.00.EN_.1.0%20-%20Requirements%20for%20RNG.pdf\nhttps://spillemyndigheden.dk/uploads/2024-10/Feedback%20p%C3%A5%20h%C3%B8ring%20om%20opdateret%20certificeringsprogram%20for%20v%C3%A6ddem%C3%A5l%20og%20onlinekasino.pdf\nhttps://www.adm.gov.it/portale/documents/20182/4251402/Linee+guida+certificazione_V.2.0.pdf\nhttps://www.adm.gov.it/portale/documents/20182/226239383/527805-05082025+protocollo+di+comunicazione+PSID3.0+in+versione+bozza.pdf\nhttps://www.adm.gov.it/portale/documents/20182/208320700/336762-16062025-PROROGA-TECNICA-CONCESSIONI-RACCOLTA-GIOCO-A-DISTANZA.pdf\nhttps://www.adm.gov.it/portale/documents/20182/208320700/126702-21022025++Determinazione+interfaccia.pdf\nhttps://anj.fr/sites/default/files/2023-07/D%C3%A9cision%202023-187_Modification_Exigences_Techniques.pdf\nhttps://anj.fr/sites/default/files/2024-07/D%C3%A9cision%202024-127_ProgrammedesJeux2025_LFDJ.pdf\nhttps://anj.fr/sites/default/files/2025-07/D%C3%A9cision%20N%C2%B02025-PR-135%20du%2030%20juin%202025%20relative%20%C3%A0%20l%27organisation%20des%20services%20de%20l%27ANJ_0.pdf\nhttps://anj.fr/sites/default/files/2021-04/Cadre%20de%20r%C3%A9f%C3%A9rence%20pr%C3%A9vention%20du%20jeu%20excessif%20et%20protection%20des%20mineurs.pdf\nhttps://www.srij.turismodeportugal.pt/sites/default/files/2022-08/RJO_Versao_inglesa_EN.pdf\nhttps://www.mga.org.mt/app/uploads/MGA-Interim-Report-2025.pdf\nhttps://www.gibraltar.gov.gi/new/sites/default/files/HMGoG_Documents/RTOS%20Final%20Version%201.0.2012.pdf"
+      }, {
         "name" : "Sharepoint Client ID",
         "provided" : false,
         "sensitive" : false,
@@ -2411,6 +2417,6 @@
   "snapshotMetadata" : {
     "author" : "DCHAFFELSON",
     "flowIdentifier" : "FetchRegulatoryReferences",
-    "timestamp" : 1769517579217
+    "timestamp" : 1769521433135
   }
 }

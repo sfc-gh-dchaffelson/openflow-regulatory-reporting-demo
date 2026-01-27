@@ -1,0 +1,11 @@
+{
+  "flow" : {
+    "createdTimestamp" : 1769517314978,
+    "description" : "Simple JSON schema with Faker based generator for Transaction matching the BoE specification",
+    "identifier" : "GenerateTransactions",
+    "lastModifiedTimestamp" : 1769517314978,
+    "name" : "GenerateTransactions",
+    "versionCount" : 0
+  },
+  "latest" : false
+}

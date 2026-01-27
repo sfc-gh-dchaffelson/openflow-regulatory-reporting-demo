@@ -1,0 +1,11 @@
+{
+  "flow" : {
+    "createdTimestamp" : 1769517578376,
+    "description" : "Simple maintenance flow to fetch the latest versions of the regulatory standards and upsert them to Sharepoint",
+    "identifier" : "FetchRegulatoryReferences",
+    "lastModifiedTimestamp" : 1769517578376,
+    "name" : "FetchRegulatoryReferences",
+    "versionCount" : 0
+  },
+  "latest" : false
+}

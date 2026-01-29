@@ -1771,7 +1771,7 @@
         "Conflict Resolution" : "NONE",
         "Disable Directory Listing" : "false",
         "Connection Timeout" : "30 sec",
-        "Dot Rename" : "true",
+        "Dot Rename" : "false",
         "Strict Host Key Checking" : "false",
         "Hostname" : "s-b79366b2831c4113a.server.transfer.eu-west-2.amazonaws.com",
         "Reject Zero-Byte Files" : "false",
@@ -2272,6 +2272,6 @@
   "snapshotMetadata" : {
     "author" : "DCHAFFELSON",
     "flowIdentifier" : "BoeGamingReport",
-    "timestamp" : 1769528255725
+    "timestamp" : 1769680329969
   }
 }

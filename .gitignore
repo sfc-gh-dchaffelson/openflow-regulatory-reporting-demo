@@ -24,8 +24,10 @@ __pycache__/
 # Build artifacts
 dist/
 build/
+target/
 *.nar
 *.egg-info/
+*.iml
 
 # Environment
 .env

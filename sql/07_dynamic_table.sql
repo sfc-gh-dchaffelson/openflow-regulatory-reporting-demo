@@ -1,0 +1,37 @@
+-- BOE Gaming Demo - Dynamic Table
+-- ============================================================================
+-- Flattens CDC JSON data for stream consumption.
+--
+-- PREREQUISITE: DEDEMO.TOURNAMENTS.POKER must exist with CHANGE_TRACKING = TRUE
+-- Run after: 06_cdc_setup.sql
+-- Run before: 08_stream.sql (stream depends on this DT)
+-- ============================================================================
+
+USE ROLE IDENTIFIER($RUNTIME_ROLE);
+USE SCHEMA DEDEMO.GAMING;
+
+CREATE OR REPLACE DYNAMIC TABLE DEDEMO.GAMING.DT_POKER_FLATTENED
+    TARGET_LAG = '1 minute'
+    WAREHOUSE = IDENTIFIER($WAREHOUSE_NAME)
+AS
+SELECT 
+    TRANSACTION_ID,
+    CREATED_TIMESTAMP,
+    TRANSACTION_DATA:tournament_id::STRING AS TOURNAMENT_ID,
+    TRANSACTION_DATA:tournament_name::STRING AS TOURNAMENT_NAME,
+    TRANSACTION_DATA:tournament_start::TIMESTAMP AS TOURNAMENT_START,
+    TRANSACTION_DATA:tournament_end::TIMESTAMP AS TOURNAMENT_END,
+    TRANSACTION_DATA:variant::STRING AS VARIANT,
+    TRANSACTION_DATA:variant_commercial::STRING AS VARIANT_COMMERCIAL,
+    TRANSACTION_DATA:player_id::STRING AS PLAYER_ID,
+    TRANSACTION_DATA:bet_amount::NUMBER AS BET_AMOUNT,
+    TRANSACTION_DATA:refund_amount::NUMBER AS REFUND_AMOUNT,
+    TRANSACTION_DATA:win_amount::NUMBER AS WIN_AMOUNT,
+    TRANSACTION_DATA:player_ip::STRING AS PLAYER_IP,
+    TRANSACTION_DATA:device_type::STRING AS DEVICE_TYPE,
+    TRANSACTION_DATA:device_id::STRING AS DEVICE_ID
+FROM DEDEMO.TOURNAMENTS.POKER;
+
+-- Verify
+SELECT 'Dynamic table created' AS status;
+SHOW DYNAMIC TABLES LIKE 'DT_POKER_FLATTENED' IN SCHEMA DEDEMO.GAMING;

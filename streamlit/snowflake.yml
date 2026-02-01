@@ -1,0 +1,12 @@
+definition_version: 2
+entities:
+  pipeline_monitor:
+    type: streamlit
+    identifier:
+      name: PIPELINE_MONITOR
+      database: DEDEMO
+      schema: GAMING
+    query_warehouse: OPENFLOW_WH
+    main_file: pipeline_monitor.py
+    artifacts:
+      - pipeline_monitor.py

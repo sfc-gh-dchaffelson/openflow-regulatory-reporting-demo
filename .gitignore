@@ -6,10 +6,20 @@
 # Credentials and Security - NEVER commit these
 credentials/*.pem
 credentials/*.key
-credentials/sftp_key*
+credentials/*_key
+credentials/*_key.pub
 credentials/passwords.txt
 credentials/*.pub
+credentials/DEPLOYMENT_VALUES.md
 *DEMO_CREDENTIALS.txt
+
+# Keystores and secrets
+*.jks
+*.p12
+*.pfx
+*.keystore
+credentials/truststores/*.pem
+credentials/truststores/*.jks
 
 # Python
 *.pyc
@@ -24,8 +34,22 @@ __pycache__/
 # Build artifacts
 dist/
 build/
-*.nar
 *.egg-info/
+streamlit/output/
+
+# Java/Maven build artifacts
+target/
+*.jar
+*.nar
+*.class
+*.war
+*.ear
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
 
 # Environment
 .env
@@ -40,6 +64,7 @@ env/
 *.swp
 *.swo
 *~
+*.code-workspace
 
 # Temporary files
 *.tmp

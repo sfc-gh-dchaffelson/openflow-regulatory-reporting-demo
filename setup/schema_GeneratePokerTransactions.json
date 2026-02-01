@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "transaction_id": {
+      "type": "string",
+      "format": "Internet.uuid"
+    },
+    "transaction_data": {
+      "type": "object",
+      "properties": {
+        "tournament_id": {
+          "type": "string",
+          "format": "Internet.uuid"
+        },
+        "tournament_name": {
+          "type": "string",
+          "enum": [
+            "Texas Holdem Championship",
+            "Omaha Masters",
+            "Stud Classic",
+            "Mixed Game Festival",
+            "High Roller Event"
+          ]
+        },
+        "tournament_start": {
+          "type": "string",
+          "format": "TimeAndDate.past '30','DAYS','yyyy-MM-dd''T''HH:mm:ss''Z'''"
+        },
+        "tournament_end": {
+          "type": "string",
+          "format": "TimeAndDate.future '7','DAYS','yyyy-MM-dd''T''HH:mm:ss''Z'''"
+        },
+        "variant": {
+          "type": "string",
+          "enum": ["TH", "OM", "ST"]
+        },
+        "variant_commercial": {
+          "type": "string",
+          "enum": ["Texas Holdem NL", "Omaha PL", "Stud"]
+        },
+        "player_id": {
+          "type": "string",
+          "format": "regexify 'PLR[0-9]{6}'"
+        },
+        "bet_amount": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 500
+        },
+        "refund_amount": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "win_amount": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "player_ip": {
+          "type": "string",
+          "format": "Internet.ipV4Address"
+        },
+        "device_type": {
+          "type": "string",
+          "enum": ["PC", "MOBILE", "TABLET"]
+        },
+        "device_id": {
+          "type": "string",
+          "format": "Internet.uuid"
+        }
+      },
+      "required": [
+        "tournament_id",
+        "tournament_name",
+        "tournament_start",
+        "tournament_end",
+        "variant",
+        "variant_commercial",
+        "player_id",
+        "bet_amount",
+        "win_amount",
+        "player_ip",
+        "device_type",
+        "device_id"
+      ]
+    }
+  },
+  "required": ["transaction_id", "transaction_data"]
+}

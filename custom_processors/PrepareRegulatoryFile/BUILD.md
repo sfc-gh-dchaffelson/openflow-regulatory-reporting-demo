@@ -1,5 +1,7 @@
 # Building the Processor NAR
 
+A pre-built NAR is included at `dist/prepare_regulatory_file-0.0.3.nar`. Only rebuild if you've modified the processor code.
+
 ## Prerequisites
 
 ```bash
@@ -13,24 +15,10 @@ cd custom_processors/PrepareRegulatoryFile
 hatch build --target nar
 ```
 
-Output: `dist/prepare_regulatory_file-0.0.1.nar` (~4KB)
+Output: `dist/prepare_regulatory_file-0.0.3.nar` (~4KB)
 
 The NAR contains only the processor code. Dependencies (lxml, signxml, cryptography, pyzipper) are installed by OpenFlow from PyPI when the processor is first loaded.
 
-## OpenFlow on SPCS: External Access Integration Required
+## Upload and Deployment
 
-If deploying to OpenFlow on Snowpark Container Services (SPCS), you must configure an External Access Integration for PyPI access. Without this, the processor will load onto the canvas but will not show properties, and OpenFlow Runtime logs will show "Failed to download dependencies for Python Processor".
-
-See [01_SNOWFLAKE_SETUP.md](../../setup/01_SNOWFLAKE_SETUP.md) for External Access Integration setup.
-
-## Upload to OpenFlow
-
-1. Open OpenFlow in web browser
-2. Click main menu in top-right corner (your username)
-3. Select **Controller Settings**
-4. Navigate to **Local Extensions** tab
-5. Upload `dist/prepare_regulatory_file-0.0.1.nar`
-6. Installation takes a few seconds
-7. You may need to manually refresh your browser
-
-See [PROCESSOR_SETUP.md](../../PROCESSOR_SETUP.md) for complete deployment instructions.
+See [README.md](README.md) for upload instructions, troubleshooting, and SPCS considerations.

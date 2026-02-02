@@ -48,6 +48,66 @@
       "destination" : {
         "comments" : "",
         "groupId" : "flow-contents-group",
+        "id" : "17f6adcf-4aaf-37dc-8764-a6467657aac1",
+        "name" : "AttributesToJSON",
+        "type" : "PROCESSOR"
+      },
+      "flowFileExpiration" : "0 sec",
+      "groupIdentifier" : "flow-contents-group",
+      "identifier" : "11185656-d366-32bb-8fa1-879f6727b51c",
+      "labelIndex" : 0,
+      "loadBalanceCompression" : "DO_NOT_COMPRESS",
+      "loadBalanceStrategy" : "DO_NOT_LOAD_BALANCE",
+      "name" : "",
+      "partitioningAttribute" : "",
+      "prioritizers" : [ ],
+      "selectedRelationships" : [ "failure" ],
+      "source" : {
+        "comments" : "",
+        "groupId" : "flow-contents-group",
+        "id" : "a0cba9f8-15d7-3c31-a9eb-5a18999e95db",
+        "name" : "DgojXadesProcessor",
+        "type" : "PROCESSOR"
+      },
+      "zIndex" : 23
+    }, {
+      "backPressureDataSizeThreshold" : "1 GB",
+      "backPressureObjectThreshold" : 10000,
+      "bends" : [ ],
+      "componentType" : "CONNECTION",
+      "destination" : {
+        "comments" : "",
+        "groupId" : "flow-contents-group",
+        "id" : "6b452af3-a7df-3577-9bd1-8a899d6da29c",
+        "name" : "PutSFTP",
+        "type" : "PROCESSOR"
+      },
+      "flowFileExpiration" : "0 sec",
+      "groupIdentifier" : "flow-contents-group",
+      "identifier" : "12b2e888-9b27-3305-9720-88a9efa2fe81",
+      "labelIndex" : 0,
+      "loadBalanceCompression" : "DO_NOT_COMPRESS",
+      "loadBalanceStrategy" : "DO_NOT_LOAD_BALANCE",
+      "name" : "",
+      "partitioningAttribute" : "",
+      "prioritizers" : [ ],
+      "selectedRelationships" : [ "success" ],
+      "source" : {
+        "comments" : "",
+        "groupId" : "flow-contents-group",
+        "id" : "a0cba9f8-15d7-3c31-a9eb-5a18999e95db",
+        "name" : "DgojXadesProcessor",
+        "type" : "PROCESSOR"
+      },
+      "zIndex" : 22
+    }, {
+      "backPressureDataSizeThreshold" : "1 GB",
+      "backPressureObjectThreshold" : 10000,
+      "bends" : [ ],
+      "componentType" : "CONNECTION",
+      "destination" : {
+        "comments" : "",
+        "groupId" : "flow-contents-group",
         "id" : "56136438-0cc5-3b87-81db-42f8aa2f937f",
         "name" : "ExecuteSQL",
         "type" : "PROCESSOR"
@@ -70,36 +130,6 @@
         "type" : "PROCESSOR"
       },
       "zIndex" : 18
-    }, {
-      "backPressureDataSizeThreshold" : "1 GB",
-      "backPressureObjectThreshold" : 10000,
-      "bends" : [ ],
-      "componentType" : "CONNECTION",
-      "destination" : {
-        "comments" : "",
-        "groupId" : "flow-contents-group",
-        "id" : "6b452af3-a7df-3577-9bd1-8a899d6da29c",
-        "name" : "PutSFTP",
-        "type" : "PROCESSOR"
-      },
-      "flowFileExpiration" : "0 sec",
-      "groupIdentifier" : "flow-contents-group",
-      "identifier" : "3773dcf0-ede9-3e6d-b19d-9e14cc591c7d",
-      "labelIndex" : 0,
-      "loadBalanceCompression" : "DO_NOT_COMPRESS",
-      "loadBalanceStrategy" : "DO_NOT_LOAD_BALANCE",
-      "name" : "",
-      "partitioningAttribute" : "",
-      "prioritizers" : [ ],
-      "selectedRelationships" : [ "success" ],
-      "source" : {
-        "comments" : "",
-        "groupId" : "flow-contents-group",
-        "id" : "d4be88f6-8d2d-35a8-9443-1ee517abba49",
-        "name" : "PrepareRegulatoryFile",
-        "type" : "PROCESSOR"
-      },
-      "zIndex" : 16
     }, {
       "backPressureDataSizeThreshold" : "1 GB",
       "backPressureObjectThreshold" : 10000,
@@ -168,8 +198,8 @@
       "destination" : {
         "comments" : "",
         "groupId" : "flow-contents-group",
-        "id" : "d4be88f6-8d2d-35a8-9443-1ee517abba49",
-        "name" : "PrepareRegulatoryFile",
+        "id" : "a0cba9f8-15d7-3c31-a9eb-5a18999e95db",
+        "name" : "DgojXadesProcessor",
         "type" : "PROCESSOR"
       },
       "flowFileExpiration" : "0 sec",
@@ -409,39 +439,9 @@
     }, {
       "backPressureDataSizeThreshold" : "1 GB",
       "backPressureObjectThreshold" : 10000,
-      "bends" : [ ],
-      "componentType" : "CONNECTION",
-      "destination" : {
-        "comments" : "",
-        "groupId" : "flow-contents-group",
-        "id" : "17f6adcf-4aaf-37dc-8764-a6467657aac1",
-        "name" : "AttributesToJSON",
-        "type" : "PROCESSOR"
-      },
-      "flowFileExpiration" : "0 sec",
-      "groupIdentifier" : "flow-contents-group",
-      "identifier" : "b50bd103-72cc-3d37-94d8-f86fcfd23885",
-      "labelIndex" : 0,
-      "loadBalanceCompression" : "DO_NOT_COMPRESS",
-      "loadBalanceStrategy" : "DO_NOT_LOAD_BALANCE",
-      "name" : "",
-      "partitioningAttribute" : "",
-      "prioritizers" : [ ],
-      "selectedRelationships" : [ "failure" ],
-      "source" : {
-        "comments" : "",
-        "groupId" : "flow-contents-group",
-        "id" : "d4be88f6-8d2d-35a8-9443-1ee517abba49",
-        "name" : "PrepareRegulatoryFile",
-        "type" : "PROCESSOR"
-      },
-      "zIndex" : 17
-    }, {
-      "backPressureDataSizeThreshold" : "1 GB",
-      "backPressureObjectThreshold" : 10000,
       "bends" : [ {
-        "x" : 520.0,
-        "y" : 928.0
+        "x" : 488.0,
+        "y" : 936.0
       } ],
       "componentType" : "CONNECTION",
       "destination" : {
@@ -1374,7 +1374,6 @@
         "File Size" : "0B",
         "Batch Size" : "1",
         "Unique FlowFiles" : "false",
-        "queries.getBatch" : "SELECT\n    batch_id,\n    operator_id,\n    warehouse_id,\n    batch_timestamp,\n    generated_xml,\n    generated_filename,\n    sftp_directory_path\nFROM #{Snowflake Database}.#{Snowflake Schema}.REGULATORY_BATCHES\nWHERE status = 'GENERATED'\nORDER BY batch_timestamp ASC",
         "Character Set" : "UTF-8",
         "Data Format" : "Text"
       },
@@ -1398,13 +1397,6 @@
           "dynamic" : false,
           "identifiesControllerService" : false,
           "name" : "Unique FlowFiles",
-          "sensitive" : false
-        },
-        "queries.getBatch" : {
-          "displayName" : "queries.getBatch",
-          "dynamic" : true,
-          "identifiesControllerService" : false,
-          "name" : "queries.getBatch",
           "sensitive" : false
         },
         "Mime Type" : {
@@ -1470,10 +1462,11 @@
       "properties" : {
         "Set Auto Commit" : "true",
         "Max Wait Time" : "0 seconds",
-        "SQL Query" : "${queries.getBatch}",
+        "SQL Query" : "SELECT\n    batch_id,\n    operator_id,\n    warehouse_id,\n    batch_timestamp,\n    generated_xml,\n    generated_filename,\n    sftp_directory_path\nFROM #{Snowflake Database}.#{Snowflake Schema}.REGULATORY_BATCHES\nWHERE status = 'GENERATED'\nORDER BY batch_timestamp ASC\nLIMIT 50",
         "Normalize Table/Column Names" : "false",
         "Database Connection Pooling Service" : "b878ef73-1417-3518-acd1-6c0e1b12c7f5",
         "Default Decimal Scale" : "0",
+        "SQL Post-Query" : "UPDATE #{Snowflake Database}.#{Snowflake Schema}.REGULATORY_BATCHES\nSET status = 'PROCESSING'\nWHERE batch_id IN (\n    SELECT batch_id\n    FROM #{Snowflake Database}.#{Snowflake Schema}.REGULATORY_BATCHES\n    WHERE status = 'GENERATED'\n    ORDER BY batch_timestamp ASC\n    LIMIT 50\n)\nAND status = 'GENERATED' ",
         "Fetch Size" : "0",
         "Output Batch Size" : "0",
         "Use Avro Logical Types" : "false",
@@ -1601,7 +1594,7 @@
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
-      "concurrentlySchedulableTaskCount" : 3,
+      "concurrentlySchedulableTaskCount" : 5,
       "executionNode" : "ALL",
       "groupIdentifier" : "flow-contents-group",
       "identifier" : "56136438-0cc5-3b87-81db-42f8aa2f937f",
@@ -2097,33 +2090,31 @@
       "type" : "org.apache.nifi.processors.standard.EvaluateJsonPath",
       "yieldDuration" : "1 sec"
     }, {
-      "autoTerminatedRelationships" : [ "original" ],
+      "autoTerminatedRelationships" : [ ],
       "backoffMechanism" : "PENALIZE_FLOWFILE",
       "bulletinLevel" : "WARN",
       "bundle" : {
-        "artifact" : "python-extensions",
-        "group" : "org.apache.nifi",
-        "version" : "0.0.3"
+        "artifact" : "nifi-dgoj-xades-nar",
+        "group" : "com.example.nifi",
+        "version" : "1.0.5"
       },
       "comments" : "",
       "componentType" : "PROCESSOR",
       "concurrentlySchedulableTaskCount" : 1,
       "executionNode" : "ALL",
       "groupIdentifier" : "flow-contents-group",
-      "identifier" : "d4be88f6-8d2d-35a8-9443-1ee517abba49",
+      "identifier" : "a0cba9f8-15d7-3c31-a9eb-5a18999e95db",
       "maxBackoffPeriod" : "10 mins",
-      "name" : "PrepareRegulatoryFile",
+      "name" : "DgojXadesProcessor",
       "penaltyDuration" : "30 sec",
       "position" : {
         "x" : -232.0,
-        "y" : 760.0
+        "y" : 752.0
       },
       "properties" : {
         "Private Key Path" : "#{DGOJ Private Key}",
         "Certificate Path" : "#{DGOJ Cert}",
         "XML Filename" : "enveloped.xml",
-        "ZIP Encryption Password" : "#{DGOJ Zip Password}",
-        "Private Key Password" : "#{DGOJ Private Key Password}",
         "Signature Method" : "enveloped"
       },
       "propertyDescriptors" : {
@@ -2186,12 +2177,12 @@
       },
       "retriedRelationships" : [ ],
       "retryCount" : 10,
-      "runDurationMillis" : 25,
+      "runDurationMillis" : 0,
       "scheduledState" : "ENABLED",
       "schedulingPeriod" : "0 sec",
       "schedulingStrategy" : "TIMER_DRIVEN",
       "style" : { },
-      "type" : "PrepareRegulatoryFile",
+      "type" : "com.example.nifi.processors.dgoj.DgojXadesProcessor",
       "yieldDuration" : "1 sec"
     } ],
     "remoteProcessGroups" : [ ],
@@ -2272,6 +2263,6 @@
   "snapshotMetadata" : {
     "author" : "DCHAFFELSON",
     "flowIdentifier" : "BoeGamingReport",
-    "timestamp" : 1769680329969
+    "timestamp" : 1770023186980
   }
 }

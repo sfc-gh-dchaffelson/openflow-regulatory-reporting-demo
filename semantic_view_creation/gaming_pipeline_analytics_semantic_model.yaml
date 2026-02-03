@@ -1,0 +1,129 @@
+name: gaming_pipeline_analytics
+description: Analytics for the BOE Gaming regulatory pipeline. Tracks batch processing
+  status, latency metrics, and error rates across the data flow from Postgres CDC
+  through Snowflake Dynamic Tables to SFTP delivery.
+tables:
+- name: REGULATORY_BATCHES
+  base_table:
+    database: DEDEMO
+    schema: GAMING
+    table: REGULATORY_BATCHES
+  primary_key:
+    columns:
+    - BATCH_ID
+  dimensions:
+  - name: BATCH_ID
+    expr: BATCH_ID
+    data_type: VARCHAR
+  - name: OPERATOR_ID
+    expr: OPERATOR_ID
+    data_type: VARCHAR
+  - name: WAREHOUSE_ID
+    expr: WAREHOUSE_ID
+    data_type: VARCHAR
+  - name: TRANSACTION_COUNT
+    expr: TRANSACTION_COUNT
+    data_type: NUMBER
+  - name: GENERATED_XML
+    expr: GENERATED_XML
+    data_type: VARCHAR
+  - name: STATUS
+    expr: STATUS
+    data_type: VARCHAR
+  - name: GENERATED_FILENAME
+    expr: GENERATED_FILENAME
+    data_type: VARCHAR
+  - name: SFTP_DIRECTORY_PATH
+    expr: SFTP_DIRECTORY_PATH
+    data_type: VARCHAR
+  time_dimensions:
+  - name: BATCH_TIMESTAMP
+    expr: BATCH_TIMESTAMP
+    data_type: TIMESTAMP_NTZ
+  - name: UPLOAD_TIMESTAMP
+    expr: UPLOAD_TIMESTAMP
+    data_type: TIMESTAMP_NTZ
+- name: PIPELINE_LATENCY_ANALYSIS
+  base_table:
+    database: DEDEMO
+    schema: GAMING
+    table: PIPELINE_LATENCY_ANALYSIS
+  dimensions:
+  - name: STAGE_ORDER
+    expr: STAGE_ORDER
+    data_type: NUMBER
+  - name: STAGE
+    expr: STAGE
+    data_type: VARCHAR
+  - name: MAX_SEC
+    expr: MAX_SEC
+    data_type: NUMBER
+  - name: SAMPLES
+    expr: SAMPLES
+    data_type: NUMBER
+  facts:
+  - name: AVG_SEC
+    expr: AVG_SEC
+    data_type: NUMBER
+- name: OPENFLOW_ERROR_SUMMARY
+  base_table:
+    database: DEDEMO
+    schema: GAMING
+    table: OPENFLOW_ERROR_SUMMARY
+  dimensions:
+  - name: LOG_LEVEL
+    expr: LOG_LEVEL
+    data_type: VARCHAR
+  - name: PROCESS_GROUP
+    expr: PROCESS_GROUP
+    data_type: VARCHAR
+  - name: ERROR_COUNT
+    expr: ERROR_COUNT
+    data_type: NUMBER
+  - name: UNIQUE_ERRORS
+    expr: UNIQUE_ERRORS
+    data_type: NUMBER
+  time_dimensions:
+  - name: HOUR
+    expr: HOUR
+    data_type: TIMESTAMP_NTZ
+verified_queries:
+- name: 0;1
+  question: What are the recent regulatory batch processing details and performance
+    over the past week?
+  sql: SELECT BATCH_ID, STATUS, TRANSACTION_COUNT, BATCH_TIMESTAMP, UPLOAD_TIMESTAMP,
+    DATEDIFF(SECOND, BATCH_TIMESTAMP, UPLOAD_TIMESTAMP) AS PROCESSING_TIME_SEC FROM
+    regulatory_batches WHERE BATCH_TIMESTAMP > DATEADD(DAY, -7, CURRENT_TIMESTAMP())
+    ORDER BY BATCH_TIMESTAMP DESC
+  verified_at: 1768739767
+  verified_by: Semantic Model Generator
+- name: 1;1
+  question: What is the performance breakdown of regulatory batches processed in the
+    last 24 hours by status?
+  sql: SELECT STATUS, COUNT(*) AS BATCH_COUNT, SUM(TRANSACTION_COUNT) AS TOTAL_TRANSACTIONS,
+    AVG(TRANSACTION_COUNT) AS AVG_BATCH_SIZE FROM regulatory_batches WHERE BATCH_TIMESTAMP
+    > DATEADD(DAY, -1, CURRENT_TIMESTAMP()) GROUP BY STATUS
+  verified_at: 1768739767
+  verified_by: Semantic Model Generator
+- name: 2;1
+  question: What are the average and maximum processing times for each stage of the
+    gaming regulatory pipeline?
+  sql: SELECT STAGE, AVG_SEC, MAX_SEC FROM pipeline_latency_analysis ORDER BY STAGE_ORDER
+  verified_at: 1768739767
+  verified_by: Semantic Model Generator
+- name: 3;1
+  question: What are the recent error patterns in our gaming data pipeline over the
+    last 24 hours?
+  sql: SELECT HOUR, LOG_LEVEL, PROCESS_GROUP, ERROR_COUNT, UNIQUE_ERRORS FROM openflow_error_summary
+    WHERE HOUR > DATEADD(DAY, -1, CURRENT_TIMESTAMP()) ORDER BY HOUR DESC
+  verified_at: 1768739767
+  verified_by: Semantic Model Generator
+- name: 4;1
+  question: How many regulatory batches were created and transactions processed by
+    hour over the last 24 hours?
+  sql: SELECT DATE_TRUNC('HOUR', BATCH_TIMESTAMP) AS HOUR, COUNT(*) AS BATCHES_CREATED,
+    SUM(TRANSACTION_COUNT) AS TRANSACTIONS_PROCESSED FROM regulatory_batches WHERE
+    BATCH_TIMESTAMP > DATEADD(DAY, -1, CURRENT_TIMESTAMP()) GROUP BY 1 ORDER BY 1
+    DESC
+  verified_at: 1768739767
+  verified_by: Semantic Model Generator

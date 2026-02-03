@@ -1,6 +1,6 @@
 # BOE Gaming Report - Regulatory Compliance Demo
 
-**Proof-of-concept:** Snowflake + Snowflake OpenFlow (Apache NiFi) implementation of Spanish gaming regulation BOE-A-2024-12639.
+**Proof-of-concept:** Snowflake Cortex + Snowflake OpenFlow (Apache NiFi) implementation of Spanish gaming regulation BOE-A-2024-12639.
 
 ---
 
@@ -31,7 +31,7 @@ This demo proves that Snowflake and OpenFlow can handle the complex technical re
 - ✅ **Proper file naming and directory structure** per BOE spec
 - ✅ **Complete audit trail** in Snowflake with status tracking
 - ✅ **XSD validation** against official DGOJ schema
-- ✅ **AI-powered specification extraction** using Snowflake Document AI and Cortex AI
+- ✅ **AI-powered specification extraction** using Snowflake Cortex AI
 
 ---
 
@@ -94,34 +94,110 @@ The full specifications define 6 information categories (12 subtypes) and 29 gam
 
 ## Architecture
 
-```
-┌────────────────────────────────┐
-│        Snowflake               │
-│  • Generate XML from JSON      │
-│  • 15-minute batch aggregation │
-│  • Complete audit trail        │
-└───────────┬────────────────────┘
-            │ 1-minute polling
-            ▼
-┌────────────────────────────────┐
-│     Snowflake OpenFlow            │
-│  • Query ready batches         │
-│  • Validate XML against XSD    │
-│  • Sign with XAdES-BES         │
-│  • Compress with Deflate       │
-│  • Encrypt with AES-256        │
-│  • Upload via SFTP             │
-│  • Update Snowflake status     │
-└───────────┬────────────────────┘
-            │ SFTP upload
-            ▼
-┌────────────────────────────────┐
-│   AWS Transfer Family (SFTP)   │
-│  CNJ/OP01/JU/YYYYMMDD/POT/     │
-└────────────────────────────────┘
+### Data Pipeline
+
+<table>
+<tr>
+<td align="center"><b>Bronze (Ingestion)</b></td>
+<td align="center"><b>Silver (Processing)</b></td>
+<td align="center"><b>Gold (Delivery)</b></td>
+</tr>
+<tr>
+<td valign="top">
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
+flowchart TB
+    A["PostgreSQL<br/>Transaction Generator"]
+    B["OpenFlow<br/>CDC Connector"]
+    C["Table<br/>CDC Landing (JSONB)"]
+    A --> B --> C
 ```
 
-**Design:** Snowflake handles data transformation and batching. OpenFlow handles transport and security. Clean separation of concerns.
+</td>
+<td valign="top">
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
+flowchart TB
+    D["Dynamic Table<br/>JSON Flattening (1-min lag) "]
+    E["Stream<br/>Change Tracking"]
+    F["OpenFlow<br/>Batch Aggregation (500 / 15 min) "]
+    G["UDF<br/>XML Generation"]
+    D --> E --> F --> G
+```
+
+</td>
+<td valign="top">
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
+flowchart TB
+    H["Table<br/>Regulatory Batches (Audit)"]
+    I["OpenFlow<br/>XAdES Signing + AES Encryption"]
+    J[("SFTP<br/>Regulatory Delivery")]
+    H --> I --> J
+```
+
+</td>
+</tr>
+</table>
+
+### Observability
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
+flowchart LR
+    subgraph OF["OpenFlow"]
+        EVENTS["Pipeline Events"]
+    end
+
+    subgraph SF0["Snowflake"]
+        AUDIT["Regulatory Batches<br/>(Audit Table)"]
+    end
+
+    subgraph SF1["Snowflake"]
+        VIEWS["Latency &<br/>Error Views"]
+    end
+
+    subgraph SF2["Snowflake"]
+        SV["Semantic View"]
+    end
+
+    subgraph SF3["Snowflake"]
+        SIS["Streamlit<br/>Dashboard"]
+    end
+
+    subgraph USER["Users"]
+        CA["Cortex Analyst<br/>(NL Queries)"]
+        UI["Real-time<br/>Monitoring"]
+    end
+
+    EVENTS --> VIEWS
+    AUDIT --> VIEWS
+    VIEWS --> SV --> CA
+    VIEWS --> SIS --> UI
+```
+
+### Pipeline Flow
+
+| Stage | Component | Purpose |
+|-------|-----------|---------|
+| **Source** | PostgreSQL (GAMING_TXNS) | OLTP transaction generation |
+| **Replication** | OpenFlow CDC Connector | Near-real-time CDC to Snowflake |
+| **Transform** | Dynamic Table | Flattens JSON, 1-minute lag |
+| **Track** | Stream | Identifies unprocessed rows |
+| **Batch** | OpenFlow Batch Processing | 500 records / 15 min batching, XML generation |
+| **Secure** | OpenFlow Boe Gaming Report | XAdES-BES signing, AES-256 encryption |
+| **Deliver** | AWS Transfer Family | SFTP to regulatory warehouse |
+| **Monitor** | Semantic View + Streamlit | Cortex Analyst queries, real-time dashboard |
+
+**Key Design Decisions:**
+- **Snowflake Postgres** as OLTP source enables realistic CDC patterns without external infrastructure
+- **Dynamic Table with 1-min lag** balances freshness against compute cost
+- **Stream on Dynamic Table** enables exactly-once processing semantics
+- **OpenFlow for security** handles XAdES-BES and AES-256 requirements that Snowflake cannot natively address
+- **Semantic View** enables natural language queries without exposing underlying table complexity
 
 ---
 
@@ -144,24 +220,17 @@ Both paths work independently - the extraction SQL includes `CREATE IF NOT EXIST
 
 ### Demo Setup
 
-Follow these setup guides in order (located in `setup/`):
+Documentation (located in `setup/`):
 
-1. **[01_SNOWFLAKE_SETUP.md](setup/01_SNOWFLAKE_SETUP.md)**
-   Create database, tables, functions, and procedures
+1. **[01_ARCHITECTURE.md](setup/01_ARCHITECTURE.md)** - System overview and data flow
+2. **[02_DEPLOYMENT.md](setup/02_DEPLOYMENT.md)** - Deployment steps and verification
+3. **[03_INFRASTRUCTURE_INVENTORY.md](setup/03_INFRASTRUCTURE_INVENTORY.md)** - Complete object reference
 
-2. **[02_CREDENTIALS_SETUP.md](setup/02_CREDENTIALS_SETUP.md)**
-   Generate DGOJ certificates, SFTP keys, and passwords
+SQL deployment scripts (located in `sql/`):
 
-3. **[03_SFTP_SETUP.md](setup/03_SFTP_SETUP.md)**
-   Create AWS Transfer Family SFTP server
+- **[sql/README.md](sql/README.md)** - Script execution order and methods
+- Numbered SQL scripts (00-09) for complete deployment
 
-4. **[04_PROCESSOR_SETUP.md](setup/04_PROCESSOR_SETUP.md)**
-   Build and deploy custom signing/encryption processor
-
-5. **[05_OPENFLOW_SETUP.md](setup/05_OPENFLOW_SETUP.md)**
-   Configure parameters and import flow
-
-**Time:** ~60-75 minutes for complete setup
 
 ---
 
@@ -218,12 +287,16 @@ Complete workflow from PDF to implementation specs:
 - `05_COMPLIANCE.md` - Full spec vs Demo differential
 
 ### Setup Guides (`setup/`)
-Numbered installation sequence:
-- `01_SNOWFLAKE_SETUP.md` + `.sql` - Database and tables
-- `02_CREDENTIALS_SETUP.md` - Generate certificates and keys
-- `03_SFTP_SETUP.md` - AWS Transfer Family configuration
-- `04_PROCESSOR_SETUP.md` - Build and deploy custom processor
-- `05_OPENFLOW_SETUP.md` - Configure parameters and import flow
+- `01_ARCHITECTURE.md` - System overview and data flow
+- `02_DEPLOYMENT.md` - Deployment steps and verification
+- `03_INFRASTRUCTURE_INVENTORY.md` - Object reference
+- `FLOW_PARAMETERS.md` - OpenFlow parameter structure
+
+### SQL Scripts (`sql/`)
+Deployment scripts for Snowflake objects:
+- `README.md` - Execution order and methods
+- `run_sql.sh` - Wrapper script for consistent execution
+- `00-09_*.sql` - Numbered scripts (database, grants, tables, functions, etc.)
 
 ### Implementation
 - `flow/BoeGamingReport.json` - OpenFlow flow definition
@@ -278,40 +351,6 @@ Numbered installation sequence:
 
 ---
 
-## Production Considerations
-
-To make this production-ready:
-
-1. **Complete XML Data Model**
-   - Implement all required fields per DGOJ XSD
-   - Add tournament metadata (dates, flags, variants)
-   - Include player participation and prize data
-   - See [05_COMPLIANCE.md](specifications/05_COMPLIANCE.md) for gaps
-
-2. **Security Enhancements**
-   - CA-issued certificates from trusted authority
-   - Hardware Security Module (HSM) for key storage
-   - Enterprise secrets management
-   - Key rotation policies
-
-3. **Infrastructure**
-   - Connect to actual DGOJ SFTP server
-   - Use DGOJ-issued operator and warehouse IDs
-   - Implement 4-year data retention
-   - Set up monitoring and alerting
-
-4. **Additional Report Types**
-   - Daily reports (RUD, CJD, CEV)
-   - Monthly reports (RUT, RUR, RUG, OPT, ORT, BOT, JUA)
-   - Additional game types (SES, RAC, RAM, COC, LOT, LOP)
-
-5. **Automation**
-   - Snowflake Tasks for scheduled batch generation
-   - Automated reconciliation and validation
-   - Error recovery and retry logic
-
----
-
 ## Resources
 
 ### Spanish Gaming Regulation
@@ -337,4 +376,4 @@ This is a demonstration project. Production use requires appropriate DGOJ licens
 
 ---
 
-**Last Updated:** October 24, 2025
+**Last Updated:** February 2026

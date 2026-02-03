@@ -33,8 +33,8 @@ classifiers = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/example/prepare-regulatory-file"
-Source = "https://github.com/example/prepare-regulatory-file"
+Documentation = "https://github.com/sfc-gh-dchaffelson/openflow-regulatory-reporting-demo/tree/main/custom_processors/PrepareRegulatoryFile"
+Source = "https://github.com/sfc-gh-dchaffelson/openflow-regulatory-reporting-demo"
 
 [tool.hatch.version]
 path = "src/prepare_regulatory_file/__about__.py"

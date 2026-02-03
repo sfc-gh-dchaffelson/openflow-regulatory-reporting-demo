@@ -1,0 +1,73 @@
+{
+  "name": "gaming_pipeline_analytics",
+  "sql_source": {
+    "queries": [
+      {
+        "sql_text": "SELECT BATCH_ID, STATUS, TRANSACTION_COUNT, BATCH_TIMESTAMP, UPLOAD_TIMESTAMP, TIMESTAMPDIFF(second, BATCH_TIMESTAMP, UPLOAD_TIMESTAMP) as PROCESSING_TIME_SEC FROM DEDEMO.GAMING.REGULATORY_BATCHES WHERE BATCH_TIMESTAMP > DATEADD(day, -7, CURRENT_TIMESTAMP()) ORDER BY BATCH_TIMESTAMP DESC"
+      },
+      {
+        "sql_text": "SELECT STATUS, COUNT(*) as BATCH_COUNT, SUM(TRANSACTION_COUNT) as TOTAL_TRANSACTIONS, AVG(TRANSACTION_COUNT) as AVG_BATCH_SIZE FROM DEDEMO.GAMING.REGULATORY_BATCHES WHERE BATCH_TIMESTAMP > DATEADD(day, -1, CURRENT_TIMESTAMP()) GROUP BY STATUS"
+      },
+      {
+        "sql_text": "SELECT STAGE, AVG_SEC, MAX_SEC FROM DEDEMO.GAMING.PIPELINE_LATENCY_ANALYSIS ORDER BY STAGE_ORDER"
+      },
+      {
+        "sql_text": "SELECT HOUR, LOG_LEVEL, PROCESS_GROUP, ERROR_COUNT, UNIQUE_ERRORS FROM DEDEMO.GAMING.OPENFLOW_ERROR_SUMMARY WHERE HOUR > DATEADD(day, -1, CURRENT_TIMESTAMP()) ORDER BY HOUR DESC"
+      },
+      {
+        "sql_text": "SELECT DATE_TRUNC('hour', BATCH_TIMESTAMP) as HOUR, COUNT(*) as BATCHES_CREATED, SUM(TRANSACTION_COUNT) as TRANSACTIONS_PROCESSED FROM DEDEMO.GAMING.REGULATORY_BATCHES WHERE BATCH_TIMESTAMP > DATEADD(day, -1, CURRENT_TIMESTAMP()) GROUP BY 1 ORDER BY 1 DESC"
+      }
+    ]
+  },
+  "tables": [
+    {
+      "database": "DEDEMO",
+      "schema": "GAMING",
+      "table": "REGULATORY_BATCHES",
+      "column_names": [
+        "BATCH_ID",
+        "OPERATOR_ID",
+        "WAREHOUSE_ID",
+        "BATCH_TIMESTAMP",
+        "TRANSACTION_COUNT",
+        "GENERATED_XML",
+        "STATUS",
+        "UPLOAD_TIMESTAMP",
+        "GENERATED_FILENAME",
+        "SFTP_DIRECTORY_PATH"
+      ]
+    },
+    {
+      "database": "DEDEMO",
+      "schema": "GAMING",
+      "table": "PIPELINE_LATENCY_ANALYSIS",
+      "column_names": [
+        "STAGE_ORDER",
+        "STAGE",
+        "AVG_SEC",
+        "MAX_SEC",
+        "SAMPLES"
+      ]
+    },
+    {
+      "database": "DEDEMO",
+      "schema": "GAMING",
+      "table": "OPENFLOW_ERROR_SUMMARY",
+      "column_names": [
+        "HOUR",
+        "LOG_LEVEL",
+        "PROCESS_GROUP",
+        "ERROR_COUNT",
+        "UNIQUE_ERRORS"
+      ]
+    }
+  ],
+  "metadata": {
+    "warehouse": "COMPUTE_WH"
+  },
+  "extensions": {
+    "semantic_view_db": "DEDEMO",
+    "semantic_view_schema": "GAMING",
+    "semantic_description": "Analytics for the BOE Gaming regulatory pipeline. Tracks batch processing status, latency metrics, and error rates across the data flow from Postgres CDC through Snowflake Dynamic Tables to SFTP delivery."
+  }
+}

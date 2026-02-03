@@ -5,7 +5,12 @@
 -- IMPORTANT: Views must be created in order due to dependencies:
 --   1. OPENFLOW_LOGS (depends on OPENFLOW.OPENFLOW.EVENTS)
 --   2. OPENFLOW_ERROR_SUMMARY (depends on OPENFLOW_LOGS)
---   3. PIPELINE_LATENCY_ANALYSIS (depends on CDC table + REGULATORY_BATCHES)
+--   3. PIPELINE_LATENCY_DETAIL (depends on CDC table + REGULATORY_BATCHES)
+--   4. PIPELINE_LATENCY_ANALYSIS (depends on PIPELINE_LATENCY_DETAIL)
+--   5. PIPELINE_BACKLOG (depends on REGULATORY_BATCHES)
+--
+-- Latency views use rolling 24-hour window for consistent metrics.
+-- Backlog view tracks batches awaiting upload separately from latency.
 --
 -- Run after: 03_tables.sql, CDC table exists
 -- ============================================================================
@@ -61,7 +66,7 @@ ORDER BY HOUR DESC, ERROR_COUNT DESC;
 
 -- =============================================================================
 -- View 3: PIPELINE_LATENCY_DETAIL
--- Individual latency records for analysis by Cortex and other tools
+-- Individual latency records for last 24 hours of pipeline performance
 -- Depends on: DEDEMO.TOURNAMENTS.POKER, DEDEMO.GAMING.REGULATORY_BATCHES
 -- Note: Dynamic Table uses configured target_lag (60s) since INFORMATION_SCHEMA
 --       table functions are not accessible from Streamlit stored procedure context
@@ -69,7 +74,7 @@ ORDER BY HOUR DESC, ERROR_COUNT DESC;
 
 CREATE OR REPLACE VIEW DEDEMO.GAMING.PIPELINE_LATENCY_DETAIL
 AS
--- CDC Replication latency: source timestamp to Snowflake arrival
+-- CDC Replication latency: source timestamp to Snowflake arrival (last 24 hours)
 SELECT
     _SNOWFLAKE_INSERTED_AT as RECORD_TIMESTAMP,
     'CDC Replication' as STAGE,
@@ -77,7 +82,7 @@ SELECT
     TRANSACTION_ID as RECORD_ID,
     CREATED_TIMESTAMP as SOURCE_TIMESTAMP
 FROM DEDEMO.TOURNAMENTS.POKER
-WHERE CREATED_TIMESTAMP > DATEADD(day, -7, CURRENT_TIMESTAMP())
+WHERE CREATED_TIMESTAMP > DATEADD(hour, -24, CURRENT_TIMESTAMP())
 
 UNION ALL
 
@@ -90,12 +95,12 @@ SELECT
     TRANSACTION_ID as RECORD_ID,
     _SNOWFLAKE_INSERTED_AT as SOURCE_TIMESTAMP
 FROM DEDEMO.TOURNAMENTS.POKER
-WHERE CREATED_TIMESTAMP > DATEADD(day, -7, CURRENT_TIMESTAMP())
+WHERE CREATED_TIMESTAMP > DATEADD(hour, -24, CURRENT_TIMESTAMP())
   AND MOD(ABS(HASH(TRANSACTION_ID)), 1000) = 0  -- Sample ~0.1% for representative count
 
 UNION ALL
 
--- Batch to SFTP Upload latency
+-- Batch to SFTP Upload latency (batches created AND uploaded in last 24 hours)
 SELECT
     UPLOAD_TIMESTAMP as RECORD_TIMESTAMP,
     'Batch to SFTP Upload' as STAGE,
@@ -104,13 +109,14 @@ SELECT
     BATCH_TIMESTAMP as SOURCE_TIMESTAMP
 FROM DEDEMO.GAMING.REGULATORY_BATCHES
 WHERE STATUS = 'UPLOADED'
-  AND UPLOAD_TIMESTAMP > DATEADD(day, -7, CURRENT_TIMESTAMP())
+  AND BATCH_TIMESTAMP > DATEADD(hour, -24, CURRENT_TIMESTAMP())
+  AND UPLOAD_TIMESTAMP > DATEADD(hour, -24, CURRENT_TIMESTAMP())
 
 ORDER BY RECORD_TIMESTAMP DESC;
 
 -- =============================================================================
 -- View 4: PIPELINE_LATENCY_ANALYSIS
--- Summary view for quick dashboard access (queries the detail view)
+-- Summary view for last 24 hours of pipeline performance
 -- Depends on: PIPELINE_LATENCY_DETAIL
 -- =============================================================================
 
@@ -123,7 +129,6 @@ WITH stage_stats AS (
         ROUND(MAX(LATENCY_SEC), 1) as MAX_SEC,
         COUNT(*) as SAMPLES
     FROM DEDEMO.GAMING.PIPELINE_LATENCY_DETAIL
-    WHERE RECORD_TIMESTAMP > DATEADD(hour, -1, CURRENT_TIMESTAMP())
     GROUP BY STAGE
 )
 SELECT
@@ -148,6 +153,24 @@ SELECT
     NULL as SAMPLES
 
 ORDER BY STAGE_ORDER;
+
+-- =============================================================================
+-- View 5: PIPELINE_BACKLOG
+-- Tracks batches awaiting upload - separate from latency metrics
+-- Use this to detect processing delays or flow outages
+-- =============================================================================
+
+CREATE OR REPLACE VIEW DEDEMO.GAMING.PIPELINE_BACKLOG
+AS
+SELECT
+    COUNT(*) as BACKLOG_COUNT,
+    SUM(TRANSACTION_COUNT) as BACKLOG_TRANSACTIONS,
+    MIN(BATCH_TIMESTAMP) as OLDEST_BATCH_TIMESTAMP,
+    TIMESTAMPDIFF(minute, MIN(BATCH_TIMESTAMP), CURRENT_TIMESTAMP()) as OLDEST_BATCH_AGE_MIN,
+    MAX(BATCH_TIMESTAMP) as NEWEST_BATCH_TIMESTAMP,
+    TIMESTAMPDIFF(minute, MAX(BATCH_TIMESTAMP), CURRENT_TIMESTAMP()) as NEWEST_BATCH_AGE_MIN
+FROM DEDEMO.GAMING.REGULATORY_BATCHES
+WHERE STATUS = 'GENERATED';
 
 -- Verify
 SELECT 'Views created' AS status;

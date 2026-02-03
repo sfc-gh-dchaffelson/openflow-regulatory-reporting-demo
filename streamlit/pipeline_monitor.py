@@ -259,11 +259,11 @@ with tab_overview:
             """).collect()
             if result and result[0]['AVG_SEC']:
                 avg_sec = float(result[0]['AVG_SEC'])
-                st.metric("Avg End-to-End Latency", f"{avg_sec:.1f} sec")
+                st.metric("Avg Latency (24h)", f"{avg_sec:.1f} sec")
             else:
-                st.metric("Avg End-to-End Latency", "N/A")
+                st.metric("Avg Latency (24h)", "N/A")
         except:
-            st.metric("Avg End-to-End Latency", "N/A")
+            st.metric("Avg Latency (24h)", "N/A")
 
     with m4:
         try:
@@ -793,7 +793,7 @@ with tab_obs:
 
 
     # Latency summary - simplified
-    st.subheader("End-to-End Latency (Last Hour)")
+    st.subheader("End-to-End Latency (Last 24 Hours)")
 
     l1, l2 = st.columns(2)
 

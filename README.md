@@ -106,6 +106,7 @@ The full specifications define 6 information categories (12 subtypes) and 29 gam
 <td valign="top">
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
 flowchart TB
     A["PostgreSQL<br/>Transaction Generator"]
     B["OpenFlow<br/>CDC Connector"]
@@ -117,6 +118,7 @@ flowchart TB
 <td valign="top">
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
 flowchart TB
     D["Dynamic Table<br/>JSON Flattening (1-min lag) "]
     E["Stream<br/>Change Tracking"]
@@ -129,6 +131,7 @@ flowchart TB
 <td valign="top">
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
 flowchart TB
     H["Table<br/>Regulatory Batches (Audit)"]
     I["OpenFlow<br/>XAdES Signing + AES Encryption"]
@@ -143,6 +146,7 @@ flowchart TB
 ### Observability
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#29B5E8', 'primaryTextColor': '#1E3A5F', 'primaryBorderColor': '#1E3A5F', 'lineColor': '#29B5E8', 'secondaryColor': '#E8F4FA', 'tertiaryColor': '#FFFFFF'}}}%%
 flowchart LR
     subgraph OF["OpenFlow"]
         EVENTS["Pipeline Events"]

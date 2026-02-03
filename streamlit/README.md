@@ -11,26 +11,28 @@ The app is structured as a progressive walkthrough of the data pipeline, designe
 | **Overview** | Pipeline health at a glance | Stage counts, key metrics, data freshness |
 | **CDC Replication** | External data landing in Snowflake | Replication metrics, raw JSONB, CDC metadata |
 | **Dynamic Table** | Automatic transformation | JSON to columns, 1-minute lag, before/after comparison |
-| **Stream** | Pending transactions | Records awaiting batch processing |
+| **Stream** | Processing throughput | Batch activity, transaction volume over time |
 | **Batches** | Regulatory submission | Batch lifecycle, XML preview, processing stats |
-| **Observability** | Operational visibility | Latency by stage, error summary, timeline |
-| **Ask Cortex** | Natural language analytics | Chat interface for ad-hoc queries |
+| **Observability** | Operational visibility | Health indicators, latency summary, volume timeline |
+| **Logs** | Pipeline logs | Error summary, warnings, filterable log viewer |
+| **Ask Cortex** | Natural language analytics | Cortex Agent with semantic model for ad-hoc queries |
 
 ## Demo Flow
 
 1. Start at **Overview** - "Here's the entire pipeline at a glance"
 2. **CDC Replication** - "Data flows from external Postgres via OpenFlow CDC"
 3. **Dynamic Table** - "Snowflake automatically flattens JSON to columns"
-4. **Stream** - "These transactions are waiting to be batched"
+4. **Stream** - "Processing throughput and batch activity"
 5. **Batches** - "Here's the generated XML for regulatory submission"
-6. **Observability** - "Full visibility into latency and errors"
-7. **Ask Cortex** - "Analysts can query with natural language"
+6. **Observability** - "Health summary and latency metrics"
+7. **Logs** - "Detailed error and warning investigation"
+8. **Ask Cortex** - "Analysts can query with natural language"
 
 Tip: The Ask Cortex tab works well with speech-to-text for impressive demos.
 
 ## Features
 
-- 7-tab progressive narrative structure
+- 8-tab progressive narrative structure
 - Real-time metrics and data samples
 - JSON structure visualization
 - XML preview with expandable view
@@ -84,18 +86,25 @@ The app queries these objects:
 | `DEDEMO.GAMING.DT_POKER_FLATTENED` | SELECT |
 | `DEDEMO.GAMING.POKER_TRANSACTIONS_STREAM` | SELECT |
 | `DEDEMO.GAMING.REGULATORY_BATCHES` | SELECT |
-| `DEDEMO.GAMING.BATCH_STAGING` | SELECT |
 | `DEDEMO.GAMING.PIPELINE_LATENCY_ANALYSIS` | SELECT |
 | `DEDEMO.GAMING.OPENFLOW_ERROR_SUMMARY` | SELECT |
-| `SNOWFLAKE.CORTEX.COMPLETE` | USAGE (for Ask Cortex tab) |
+| `DEDEMO.GAMING.OPENFLOW_LOGS` | SELECT |
+| `@DEDEMO.GAMING.CORTEX_MODELS` | READ (semantic model stage) |
 
-## Cortex Analyst Integration
+## Cortex Agent Integration
 
-The Ask Cortex tab uses `SNOWFLAKE.CORTEX.COMPLETE` with `claude-3-5-sonnet` to:
+The Ask Cortex tab uses the Cortex Agent API with `claude-opus-4-5` and a semantic model:
 
-1. Generate SQL from natural language questions
-2. Execute the query against pipeline tables
-3. Summarize results in plain language
+**Semantic Model Location:**
+```
+@DEDEMO.GAMING.CORTEX_MODELS/semantic_models/gaming_pipeline_analytics_semantic_model.yaml
+```
+
+**How it works:**
+1. User asks a natural language question
+2. Cortex Agent uses `cortex_analyst_text_to_sql` tool with the semantic model
+3. Agent generates and executes SQL against pipeline tables
+4. Results are displayed with the generated SQL available for review
 
 Sample questions are provided as quick-start buttons.
 
@@ -105,5 +114,6 @@ Sample questions are provided as quick-start buttons.
 |-------|----------|
 | "N/A" metrics | Pipeline objects may not exist yet - check deployment |
 | Stream errors | Stream may be empty (normal after processing) |
-| Cortex errors | Verify CORTEX.COMPLETE access for your role |
+| Cortex errors | Verify semantic model exists at stage path and role has READ access |
 | Missing data | Ensure CDC connector and flows are running |
+| Log viewer empty | Check OPENFLOW_LOGS view exists and has data |

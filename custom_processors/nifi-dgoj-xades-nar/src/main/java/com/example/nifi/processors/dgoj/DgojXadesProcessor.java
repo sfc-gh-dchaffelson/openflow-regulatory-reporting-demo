@@ -30,6 +30,7 @@ import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.model.enums.AesKeyStrength;
 import net.lingala.zip4j.model.enums.CompressionMethod;
 import net.lingala.zip4j.model.enums.EncryptionMethod;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.pkcs.RSAPrivateKey;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -56,6 +57,7 @@ import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 
+import java.security.Security;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -97,6 +99,10 @@ public class DgojXadesProcessor extends AbstractProcessor {
     // Constants
     private static final int BUFFER_SIZE = 8192;
     private static final String PEM_HEADER_PREFIX = "-----BEGIN";
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     // Allowable values for signature method
     public static final AllowableValue ENVELOPED = new AllowableValue(
@@ -524,13 +530,16 @@ public class DgojXadesProcessor extends AbstractProcessor {
                 PKCS8EncryptedPrivateKeyInfo encryptedInfo = (PKCS8EncryptedPrivateKeyInfo) pemObject;
 
                 InputDecryptorProvider decryptorProvider =
-                        new JceOpenSSLPKCS8DecryptorProviderBuilder().build(password.toCharArray());
+                        new JceOpenSSLPKCS8DecryptorProviderBuilder()
+                                .setProvider("BC")
+                                .build(password.toCharArray());
 
                 PrivateKeyInfo privateKeyInfo = encryptedInfo.decryptPrivateKeyInfo(decryptorProvider);
 
                 return new JcaPEMKeyConverter().getPrivateKey(privateKeyInfo);
             } else {
-                throw new IllegalArgumentException("Not an encrypted private key");
+                throw new IllegalArgumentException("Expected PKCS8EncryptedPrivateKeyInfo but got: " +
+                        (pemObject != null ? pemObject.getClass().getName() : "null"));
             }
         }
     }

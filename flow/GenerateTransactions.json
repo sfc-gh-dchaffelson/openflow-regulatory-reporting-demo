@@ -165,7 +165,7 @@
         "Database Driver Class Name" : "org.postgresql.Driver",
         "Minimum Idle Connections" : "0",
         "Max Total Connections" : "8",
-        "Database Connection URL" : "jdbc:postgresql://3cdbnekhqfaa7crk46l2xazyzq.sfseeurope-dchaffelson-az1.westeurope.azure.postgres.snowflake.app:5432/postgres",
+        "Database Connection URL" : "#{PostgreSQL Connection URL}",
         "Password Source" : "PASSWORD",
         "Time Between Eviction Runs" : "-1",
         "Database User" : "snowflake_admin",
